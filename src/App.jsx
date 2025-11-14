@@ -1,0 +1,241 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+} from "@mui/material";
+import { Piano, Audiotrack } from "@mui/icons-material";
+import Header from "./components/Header";
+import ChordProgression from "./pages/ChordProgression";
+import SoundDesign from "./pages/SoundDesign";
+import { audioEngine } from "./utils/audioEngine";
+import "./App.css";
+
+function App() {
+  // Navigation state
+  const [currentPage, setCurrentPage] = useState("chordProgression");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Music state
+  const [bpm, setBpm] = useState(120);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [measures, setMeasures] = useState(4);
+  const [currentBeat, setCurrentBeat] = useState(0);
+  const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: { first, second } }
+  const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
+  const intervalRef = useRef(null);
+  const halfBeatTimeoutRef = useRef(null);
+
+  // Calculate time interval per beat (milliseconds)
+  const beatInterval = (60 / bpm) * 1000;
+  const halfBeatInterval = beatInterval / 2;
+
+  // Helper function to extract root note from chord name
+  const extractRootNote = (chordName) => {
+    if (!chordName) return null;
+    if (chordName.length >= 2 && chordName[1] === "#") {
+      return chordName.substring(0, 2); // C#, D#, etc.
+    }
+    return chordName[0]; // C, D, E, etc.
+  };
+
+  // Helper function to play chord
+  const playChord = useCallback(
+    (chordName) => {
+      if (chordName) {
+        const rootNote = extractRootNote(chordName);
+        if (rootNote) {
+          audioEngine.playChordRoot(rootNote, bpm);
+        }
+      }
+    },
+    [bpm]
+  );
+
+  useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(() => {
+        setCurrentBeat((prev) => {
+          const nextBeat = (prev + 1) % (measures * 4);
+          const chords = beatChords[nextBeat];
+
+          // Play first half chord immediately
+          if (chords?.first) {
+            playChord(chords.first);
+          }
+
+          // Schedule second half chord
+          if (chords?.second) {
+            halfBeatTimeoutRef.current = setTimeout(() => {
+              playChord(chords.second);
+            }, halfBeatInterval);
+          }
+
+          return nextBeat;
+        });
+      }, beatInterval);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (halfBeatTimeoutRef.current) {
+        clearTimeout(halfBeatTimeoutRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (halfBeatTimeoutRef.current) {
+        clearTimeout(halfBeatTimeoutRef.current);
+      }
+    };
+  }, [
+    isPlaying,
+    bpm,
+    measures,
+    beatInterval,
+    halfBeatInterval,
+    beatChords,
+    playChord,
+  ]);
+
+  const togglePlay = () => {
+    // Initialize audio engine on first play (requires user interaction)
+    audioEngine.init();
+    setIsPlaying(true);
+  };
+
+  const stopPlay = () => {
+    setIsPlaying(false);
+  };
+
+  const replayFromStart = () => {
+    setCurrentBeat(0);
+    setIsPlaying(true);
+  };
+
+  const refreshPage = () => {
+    setIsPlaying(false);
+    setCurrentBeat(0);
+    setMeasures(4);
+    setBpm(120);
+    setBeatChords({});
+  };
+
+  const addMeasure = () => {
+    setMeasures((prev) => prev + 1);
+  };
+
+  const handleBpmChange = (e) => {
+    const value = parseInt(e.target.value);
+    if (value > 0 && value <= 300) {
+      setBpm(value);
+    }
+  };
+
+  const handleBeatClick = (beatIndex, half) => {
+    setSelectedBeat({ beatIndex, half });
+  };
+
+  const handleChordSelect = (beatIndex, half, chord) => {
+    setBeatChords((prev) => {
+      const newChords = { ...prev };
+
+      if (!newChords[beatIndex]) {
+        newChords[beatIndex] = {};
+      }
+
+      if (chord === null) {
+        delete newChords[beatIndex][half];
+        // Remove beat entry if both halves are empty
+        if (!newChords[beatIndex].first && !newChords[beatIndex].second) {
+          delete newChords[beatIndex];
+        }
+      } else {
+        newChords[beatIndex][half] = chord;
+      }
+
+      return newChords;
+    });
+  };
+
+  // Menu navigation
+  const menuItems = [
+    { id: "chordProgression", label: "Chord Progression", icon: <Piano /> },
+    { id: "soundDesign", label: "Sound Design", icon: <Audiotrack /> },
+  ];
+
+  const handleMenuClick = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
+
+  const handlePageChange = (pageId) => {
+    // Pause playback when switching pages
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+    setCurrentPage(pageId);
+    setDrawerOpen(false);
+  };
+
+  return (
+    <>
+      <Header onMenuClick={handleMenuClick} />
+
+      {/* Side Drawer Navigation */}
+      <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerClose}>
+        <Box sx={{ width: 250 }} role="presentation">
+          <List>
+            {menuItems.map((item) => (
+              <ListItem key={item.id} disablePadding>
+                <ListItemButton
+                  selected={currentPage === item.id}
+                  onClick={() => handlePageChange(item.id)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Page Content */}
+      {currentPage === "chordProgression" && (
+        <ChordProgression
+          bpm={bpm}
+          setBpm={setBpm}
+          isPlaying={isPlaying}
+          measures={measures}
+          currentBeat={currentBeat}
+          beatChords={beatChords}
+          selectedBeat={selectedBeat}
+          togglePlay={togglePlay}
+          stopPlay={stopPlay}
+          replayFromStart={replayFromStart}
+          refreshPage={refreshPage}
+          addMeasure={addMeasure}
+          handleBpmChange={handleBpmChange}
+          handleBeatClick={handleBeatClick}
+          handleChordSelect={handleChordSelect}
+          setSelectedBeat={setSelectedBeat}
+        />
+      )}
+
+      {currentPage === "soundDesign" && <SoundDesign />}
+    </>
+  );
+}
+
+export default App;
