@@ -8,10 +8,11 @@ import {
   ListItemText,
   Box,
 } from "@mui/material";
-import { Piano, Audiotrack } from "@mui/icons-material";
+import { Piano, Audiotrack, Science } from "@mui/icons-material";
 import Header from "./components/Header";
 import ChordProgression from "./pages/ChordProgression";
 import SoundDesign from "./pages/SoundDesign";
+import Test from "./pages/Test";
 import { audioEngine } from "./utils/audioEngine";
 import "./App.css";
 
@@ -169,6 +170,7 @@ function App() {
   const menuItems = [
     { id: "chordProgression", label: "Chord Progression", icon: <Piano /> },
     { id: "soundDesign", label: "Sound Design", icon: <Audiotrack /> },
+    { id: "test", label: "Test", icon: <Science /> },
   ];
 
   const handleMenuClick = () => {
@@ -234,6 +236,8 @@ function App() {
       )}
 
       {currentPage === "soundDesign" && <SoundDesign />}
+
+      {currentPage === "test" && <Test />}
     </>
   );
 }
