@@ -1,7 +1,14 @@
 import { Box, Typography } from "@mui/material";
 import { useState, useRef, useEffect } from "react";
 
-function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
+function Knob({
+  min = 0,
+  max = 100,
+  value = 50,
+  onChange,
+  label = "",
+  step = 0.1,
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
   const knobRef = useRef(null);
@@ -15,6 +22,11 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
   };
 
   const angle = valueToAngle(currentValue);
+
+  // Calculate display width based on max value length
+  const decimals = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+  const maxDisplayText = max.toFixed(decimals);
+  const displayWidth = Math.max(maxDisplayText.length * 7 + 8, 32); // ~7px per character + padding
 
   const handleMouseDown = (e) => {
     e.preventDefault();
@@ -35,6 +47,9 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
       let newValue = dragStartValue.current + deltaValue;
       newValue = Math.max(min, Math.min(max, newValue)); // Clamp between min and max
 
+      // Round to step precision
+      newValue = Math.round(newValue / step) * step;
+
       setCurrentValue(newValue);
       if (onChange) {
         onChange(newValue);
@@ -54,7 +69,7 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging, min, max, onChange]);
+  }, [isDragging, min, max, onChange, step]);
 
   // Update current value when prop changes
   useEffect(() => {
@@ -67,7 +82,7 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 1,
+        gap: 0,
         userSelect: "none",
       }}
     >
@@ -75,7 +90,7 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
       {label && (
         <Typography
           variant="body1"
-          sx={{ fontWeight: "bold", mb: 1, fontSize: "1rem" }}
+          sx={{ fontWeight: "bold", mb: 0, fontSize: "1rem" }}
         >
           {label}
         </Typography>
@@ -85,11 +100,12 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
       <Box
         sx={{
           position: "relative",
-          width: 140,
-          height: 120,
+          width: 120,
+          height: 100,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          paddingBottom: "18px",
         }}
       >
         {/* Min Label - Bottom Left */}
@@ -97,11 +113,14 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
           variant="caption"
           sx={{
             position: "absolute",
-            bottom: 5,
-            left: 5,
+            bottom: 0,
+            left: 0,
             color: "text.secondary",
-            fontSize: "0.75rem",
+            fontSize: "0.7rem",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            height: "18px",
           }}
         >
           {min}
@@ -112,11 +131,14 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
           variant="caption"
           sx={{
             position: "absolute",
-            bottom: 5,
-            right: 5,
+            bottom: 0,
+            right: 0,
             color: "text.secondary",
-            fontSize: "0.75rem",
+            fontSize: "0.7rem",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            height: "18px",
           }}
         >
           {max}
@@ -128,8 +150,8 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
           onMouseDown={handleMouseDown}
           sx={{
             position: "relative",
-            width: 100,
-            height: 100,
+            width: 70,
+            height: 70,
             borderRadius: "50%",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             boxShadow: isDragging
@@ -158,37 +180,39 @@ function Knob({ min = 0, max = 100, value = 50, onChange, label = "" }) {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: 30,
-              height: 30,
+              width: 20,
+              height: 20,
               borderRadius: "50%",
               backgroundColor: "#333",
               pointerEvents: "none",
             }}
           />
         </Box>
-      </Box>
 
-      {/* Current Value Display */}
-      <Box
-        sx={{
-          mt: 0.5,
-          px: 1.5,
-          py: 0.5,
-          border: "1px solid",
-          borderColor: "primary.main",
-          borderRadius: 1,
-          backgroundColor: "background.paper",
-        }}
-      >
+        {/* Current Value Display - Centered at Bottom */}
         <Typography
-          variant="body2"
+          variant="caption"
           sx={{
-            fontWeight: "bold",
+            position: "absolute",
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
             color: "primary.main",
-            fontSize: "0.875rem",
+            fontSize: "0.7rem",
+            fontWeight: "bold",
+            px: 0.5,
+            border: "1px solid",
+            borderColor: "primary.main",
+            borderRadius: 0.5,
+            backgroundColor: "background.paper",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "18px",
+            minWidth: `${displayWidth}px`,
           }}
         >
-          {currentValue.toFixed(1)}
+          {currentValue.toFixed(decimals)}
         </Typography>
       </Box>
     </Box>
