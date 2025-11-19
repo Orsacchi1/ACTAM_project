@@ -1,6 +1,7 @@
 import { Container, Typography, Box, Paper, Divider } from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
+import BarChart from "../components/BarChart";
 
 function Test() {
   const [volume, setVolume] = useState(50);
@@ -98,6 +99,38 @@ function Test() {
           <Typography variant="body2" color="text.secondary">
             💡 <strong>How to use:</strong> Click and hold the knob, then move
             mouse up/down to adjust the value.
+          </Typography>
+        </Box>
+      </Paper>
+
+      {/* 2. BarChart Component Demo (Dashboard with proportional scaling) */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          BarChart Component Demo (Dashboard)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          This component displays multiple bars with proportional scaling. The
+          maximum value is scaled to 80% of the container height, and all other
+          values are scaled proportionally.
+        </Typography>
+
+        {/* BarChart Display */}
+        <Box sx={{ width: "35%", mx: "auto" }}>
+          <BarChart
+            values={[
+              0.2, 0.5, 0.8, 0.3, 0.6, 0.9, 0.4, 0.7, 1.0, 0.5, 0.3, 0.6,
+            ]}
+            height={200}
+            title="Harmonic Distribution"
+          />
+        </Box>
+
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            💡 <strong>Feature:</strong> The tallest bar represents the maximum
+            value and scales to 80% of the container height. All other bars
+            scale proportionally. Colors change based on height: Red (&gt;70%),
+            Orange (&gt;50%), Purple (default).
           </Typography>
         </Box>
       </Paper>
