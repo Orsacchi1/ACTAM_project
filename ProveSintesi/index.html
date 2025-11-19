@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <script type="module" src="./src/addSynth.js"></script>
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <button id="startButton">Start</button>
+  <button id="changeFrequency1">change frequency 1</button>
+  <button id="stopButton">Stop</button>
+  <button id="resumeButton">Resume</button>
+  <br>
+  <input type="range" id="LPF" min="0" max="1" value="1" step="0.001">
+  <input type="range" id="HPF" min="0" max="1" value="0" step="0.001">
+  <div class="checkbox-row">
+    <input type="checkbox" id="sparse" value="1">
+    <label for="sparse">Sparse Harmonics</label>
+  </div>
+  <h2>DAMPING TYPE</h2>
+  <div class="btns">
+    <input type="radio" id="d1" name="group1" value="0" checked>
+    <label class="btn" for="d1">Linear</label>
+
+
+    <input type="radio" id="d2" name="group1" value="1">
+    <label class="btn" for="d2">Quadratic</label>
+
+
+    <input type="radio" id="d3" name="group1" value="2">
+    <label class="btn" for="d3">Exponential</label>
+  </div>
+  
+  <h2>SPECTRAL AMPLITUDE QUALITY</h2>
+  <div class="btns">
+    <input type="radio" id="randFiltButton" name="group2" value="1" checked>
+    <label class="btn" for="randFiltButton">RandomFiltering</label>
+
+
+    <input type="radio" id="clusterButton" name="group2" value="2">
+    <label class="btn" for="clusterButton">Cluster Harmonics</label>
+
+    <input type="radio" id="noneButton" name="group2" value="0">
+    <label class="btn" for="noneButton">None</label>
+  </div>
+  <input type="range" id="gainIn" min="0" max="4" value="1" step="0.02">
+  <label for="gainIn">Gain In</label>
+  
+  <input type="range" id="gainOut" min="0" max="4" value="1" step="0.02">
+  <label for="gainOut">Gain Out</label>
+</body>
+</html>
