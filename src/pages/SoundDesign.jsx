@@ -197,6 +197,7 @@ function SoundDesign(soundEngine = null) {
   // to ensure you're using the latest value, as React state updates are asynchronous
   const handleL1aChange = (value) => {
     setL1a(value);
+    console.log("L1a changed to", value);
     // TODO: Add audio engine update logic here using 'value' parameter
     // Example: audioEngine.setHiCutFrequency(value);
   };

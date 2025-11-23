@@ -108,12 +108,12 @@ function Knob({
           paddingBottom: "18px",
         }}
       >
-        {/* Min Label - Bottom Left */}
+        {/* Min Label - Left Side */}
         <Typography
           variant="caption"
           sx={{
             position: "absolute",
-            bottom: 0,
+            bottom: "17%",
             left: 0,
             color: "text.secondary",
             fontSize: "0.7rem",
@@ -126,12 +126,12 @@ function Knob({
           {min}
         </Typography>
 
-        {/* Max Label - Bottom Right */}
+        {/* Max Label - Right Side */}
         <Typography
           variant="caption"
           sx={{
             position: "absolute",
-            bottom: 0,
+            bottom: "17%",
             right: 0,
             color: "text.secondary",
             fontSize: "0.7rem",
