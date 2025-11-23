@@ -165,7 +165,7 @@ const KNOB_CONFIG = [
   },
 ];
 
-function SoundDesign() {
+function SoundDesign(soundEngine = null) {
   // Left Column (L), Row 1, Knobs A/B/C - Hi Cut Filter
   const [l1a, setL1a] = useState(KNOB_CONFIG[0].knobs[0].default);
   const [l1b, setL1b] = useState(KNOB_CONFIG[0].knobs[1].default);

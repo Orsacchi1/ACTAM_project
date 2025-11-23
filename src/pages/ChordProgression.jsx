@@ -20,6 +20,7 @@ function ChordProgression({
   handleBeatClick,
   handleChordSelect,
   setSelectedBeat,
+  soundEngine = null,
 }) {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
