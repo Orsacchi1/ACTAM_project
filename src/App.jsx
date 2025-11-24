@@ -120,6 +120,13 @@ function App() {
   const togglePlay = () => {
     // Initialize audio engine on first play (requires user interaction)
     audioEngine.init();
+
+    // Check if current beat has custom velocity and apply it
+    const currentBeatVelocity = beatVelocities[currentBeat];
+    if (currentBeatVelocity !== undefined) {
+      setBpm(currentBeatVelocity);
+    }
+
     setIsPlaying(true);
   };
 
@@ -129,6 +136,13 @@ function App() {
 
   const replayFromStart = () => {
     setCurrentBeat(0);
+
+    // Check if first beat (beat 0) has custom velocity and apply it
+    const firstBeatVelocity = beatVelocities[0];
+    if (firstBeatVelocity !== undefined) {
+      setBpm(firstBeatVelocity);
+    }
+
     setIsPlaying(true);
   };
 
