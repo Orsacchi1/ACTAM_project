@@ -1,4 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
+import { Delete, Add } from "@mui/icons-material";
 import Beat from "./Beat";
 
 function Measure({
@@ -8,10 +9,17 @@ function Measure({
   beatChords,
   beatVelocities,
   onVelocitySelect,
+  onInsertMeasure,
+  onDeleteMeasure,
   beatsPerMeasure = 4,
+  beatsToInsert = 4,
   startBeat = 0,
 }) {
   const beats = Array.from({ length: beatsPerMeasure }, (_, i) => i);
+
+  const handleInsert = () => {
+    onInsertMeasure(measureIndex, beatsToInsert);
+  };
 
   return (
     <Box
@@ -22,29 +30,78 @@ function Measure({
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        height: 100,
+        height: 150,
         py: 1,
       }}
     >
-      {/* Measure number */}
-      <Typography
-        variant="caption"
+      {/* Measure number and delete button */}
+      <Box
         sx={{
           position: "absolute",
           top: -20,
           left: 4,
-          fontWeight: "bold",
-          color: "primary.main",
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
         }}
       >
-        {measureIndex + 1}
-      </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: "bold",
+            color: "primary.main",
+          }}
+        >
+          {measureIndex + 1}
+        </Typography>
+        <IconButton
+          size="small"
+          onClick={() => onDeleteMeasure(measureIndex)}
+          sx={{
+            padding: 0,
+            width: 16,
+            height: 16,
+            color: "error.main",
+            "&:hover": {
+              backgroundColor: "error.light",
+              color: "error.dark",
+            },
+          }}
+        >
+          <Delete sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Box>
+
+      {/* Insert button at the end of measure */}
+      <IconButton
+        size="small"
+        onClick={handleInsert}
+        sx={{
+          position: "absolute",
+          top: -20,
+          right: -10,
+          padding: 0,
+          width: 20,
+          height: 20,
+          color: "success.main",
+          backgroundColor: "background.paper",
+          border: "1px solid",
+          borderColor: "success.main",
+          "&:hover": {
+            backgroundColor: "success.light",
+            color: "success.dark",
+          },
+        }}
+      >
+        <Add sx={{ fontSize: 16 }} />
+      </IconButton>
 
       {/* Velocity display layer */}
       <Box
         sx={{
           display: "flex",
-          height: 16,
+          height: 20,
+          minHeight: 20,
           alignItems: "center",
           borderBottom: "1px solid #f5f5f5",
         }}
@@ -57,7 +114,7 @@ function Measure({
               key={beatInMeasure}
               onClick={() => {
                 const newVelocity = prompt(
-                  `设置拍子 ${absoluteBeat + 1} 的速度 (40-240 BPM):`,
+                  `Set tempo for beat ${absoluteBeat + 1} (40-240 BPM):`,
                   velocity || 120
                 );
                 if (newVelocity) {
@@ -65,7 +122,7 @@ function Measure({
                   if (vel >= 40 && vel <= 240) {
                     onVelocitySelect(absoluteBeat, vel);
                   } else {
-                    alert("速度必须在 40-240 之间");
+                    alert("Tempo must be between 40-240");
                   }
                 }
               }}
@@ -105,7 +162,8 @@ function Measure({
       <Box
         sx={{
           display: "flex",
-          height: 20,
+          height: 24,
+          minHeight: 24,
           alignItems: "center",
           borderBottom: "1px solid #e0e0e0",
         }}

@@ -140,7 +140,6 @@ function ChordSelector({
               placeholder={String(defaultBpm)}
               inputProps={{ min: 30, max: 300 }}
               sx={{ flex: 1 }}
-              helperText={`Leave empty to use default (${defaultBpm} BPM)`}
             />
             <Button
               variant="contained"

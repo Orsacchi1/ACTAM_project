@@ -8,6 +8,9 @@ function Timeline({
   beatChords,
   beatVelocities,
   onVelocitySelect,
+  onInsertMeasure,
+  onDeleteMeasure,
+  beatsPerMeasure: beatsToInsert,
 }) {
   // Calculate start beat for each measure
   const getStartBeat = (measureIndex) => {
@@ -40,7 +43,7 @@ function Timeline({
                   length: Math.min(4, totalMeasures - rowIndex * 4),
                 }).map((_, colIndex) => {
                   const measureIndex = rowIndex * 4 + colIndex;
-                  const beatsPerMeasure = measures[measureIndex];
+                  const currentMeasureBeats = measures[measureIndex];
                   const startBeat = getStartBeat(measureIndex);
                   return (
                     <Measure
@@ -51,7 +54,10 @@ function Timeline({
                       beatChords={beatChords}
                       beatVelocities={beatVelocities}
                       onVelocitySelect={onVelocitySelect}
-                      beatsPerMeasure={beatsPerMeasure}
+                      onInsertMeasure={onInsertMeasure}
+                      onDeleteMeasure={onDeleteMeasure}
+                      beatsPerMeasure={currentMeasureBeats}
+                      beatsToInsert={beatsToInsert}
                       startBeat={startBeat}
                     />
                   );

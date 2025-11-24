@@ -144,6 +144,115 @@ function App() {
     setMeasures((prev) => [...prev, beatsPerMeasure]);
   };
 
+  const insertMeasure = (afterMeasureIndex, beatsPerMeasure = 4) => {
+    // Calculate the beat position where the new measure will be inserted
+    const insertBeat = measures
+      .slice(0, afterMeasureIndex + 1)
+      .reduce((sum, beats) => sum + beats, 0);
+
+    // Insert the measure
+    setMeasures((prev) => {
+      const newMeasures = [...prev];
+      newMeasures.splice(afterMeasureIndex + 1, 0, beatsPerMeasure);
+      return newMeasures;
+    });
+
+    // Shift chords and velocities after the insertion point
+    setBeatChords((prev) => {
+      const newChords = {};
+      Object.keys(prev).forEach((beatIndexStr) => {
+        const beatIndex = parseInt(beatIndexStr);
+        if (beatIndex < insertBeat) {
+          // Keep beats before insertion
+          newChords[beatIndex] = prev[beatIndex];
+        } else {
+          // Shift beats after insertion
+          newChords[beatIndex + beatsPerMeasure] = prev[beatIndex];
+        }
+      });
+      return newChords;
+    });
+
+    setBeatVelocities((prev) => {
+      const newVelocities = {};
+      Object.keys(prev).forEach((beatIndexStr) => {
+        const beatIndex = parseInt(beatIndexStr);
+        if (beatIndex < insertBeat) {
+          newVelocities[beatIndex] = prev[beatIndex];
+        } else {
+          newVelocities[beatIndex + beatsPerMeasure] = prev[beatIndex];
+        }
+      });
+      return newVelocities;
+    });
+
+    // Adjust current beat if needed
+    setCurrentBeat((prev) => {
+      if (prev >= insertBeat) {
+        return prev + beatsPerMeasure;
+      }
+      return prev;
+    });
+  };
+
+  const deleteMeasure = (measureIndex) => {
+    if (measures.length <= 1) {
+      alert("At least one measure must be kept");
+      return;
+    }
+
+    // Calculate the start beat of the measure to be deleted
+    const startBeat = measures
+      .slice(0, measureIndex)
+      .reduce((sum, beats) => sum + beats, 0);
+    const beatsInMeasure = measures[measureIndex];
+    const endBeat = startBeat + beatsInMeasure;
+
+    // Remove the measure
+    setMeasures((prev) => prev.filter((_, index) => index !== measureIndex));
+
+    // Remove chords and velocities for beats in the deleted measure
+    // and shift down beats after the deleted measure
+    setBeatChords((prev) => {
+      const newChords = {};
+      Object.keys(prev).forEach((beatIndexStr) => {
+        const beatIndex = parseInt(beatIndexStr);
+        if (beatIndex < startBeat) {
+          // Keep beats before deleted measure
+          newChords[beatIndex] = prev[beatIndex];
+        } else if (beatIndex >= endBeat) {
+          // Shift down beats after deleted measure
+          newChords[beatIndex - beatsInMeasure] = prev[beatIndex];
+        }
+        // Skip beats in deleted measure (startBeat <= beatIndex < endBeat)
+      });
+      return newChords;
+    });
+
+    setBeatVelocities((prev) => {
+      const newVelocities = {};
+      Object.keys(prev).forEach((beatIndexStr) => {
+        const beatIndex = parseInt(beatIndexStr);
+        if (beatIndex < startBeat) {
+          newVelocities[beatIndex] = prev[beatIndex];
+        } else if (beatIndex >= endBeat) {
+          newVelocities[beatIndex - beatsInMeasure] = prev[beatIndex];
+        }
+      });
+      return newVelocities;
+    });
+
+    // Reset current beat if it's in or after the deleted measure
+    setCurrentBeat((prev) => {
+      if (prev >= endBeat) {
+        return prev - beatsInMeasure;
+      } else if (prev >= startBeat) {
+        return startBeat > 0 ? startBeat - 1 : 0;
+      }
+      return prev;
+    });
+  };
+
   const handleBpmChange = (e) => {
     const value = parseInt(e.target.value);
     if (value > 0 && value <= 300) {
@@ -255,6 +364,8 @@ function App() {
           replayFromStart={replayFromStart}
           refreshPage={refreshPage}
           addMeasure={addMeasure}
+          insertMeasure={insertMeasure}
+          deleteMeasure={deleteMeasure}
           handleBpmChange={handleBpmChange}
           handleVelocitySelect={handleVelocitySelect}
           handleBeatClick={handleBeatClick}

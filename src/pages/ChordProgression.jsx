@@ -1,4 +1,5 @@
 import { Container, Typography, Box } from "@mui/material";
+import { useState } from "react";
 import ControlPanel from "../components/ControlPanel";
 import Timeline from "../components/Timeline";
 import StatusDisplay from "../components/StatusDisplay";
@@ -17,6 +18,8 @@ function ChordProgression({
   replayFromStart,
   refreshPage,
   addMeasure,
+  insertMeasure,
+  deleteMeasure,
   handleBpmChange,
   handleBeatClick,
   handleChordSelect,
@@ -24,6 +27,8 @@ function ChordProgression({
   setSelectedBeat,
   soundEngine = null,
 }) {
+  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
+
   // Adapter function for ChordSelector's onBeatBpmChange
   // ChordSelector passes (beatIndex, half, value) but we only need (beatIndex, value)
   const handleBeatBpmChange = (beatIndex, _half, value) => {
@@ -53,6 +58,8 @@ function ChordProgression({
         onRefresh={refreshPage}
         onAddMeasure={addMeasure}
         onBpmChange={handleBpmChange}
+        beatsPerMeasure={beatsPerMeasure}
+        setBeatsPerMeasure={setBeatsPerMeasure}
       />
 
       {/* Timeline */}
@@ -63,6 +70,9 @@ function ChordProgression({
         beatChords={beatChords}
         beatVelocities={beatVelocities}
         onVelocitySelect={handleVelocitySelect}
+        onInsertMeasure={insertMeasure}
+        onDeleteMeasure={deleteMeasure}
+        beatsPerMeasure={beatsPerMeasure}
       />
 
       {/* Status Display */}

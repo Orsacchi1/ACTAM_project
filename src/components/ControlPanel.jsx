@@ -1,6 +1,5 @@
 import { Button, TextField, Paper, Stack, Typography } from "@mui/material";
 import { PlayArrow, Stop, Replay, Refresh, Add } from "@mui/icons-material";
-import { useState } from "react";
 
 function ControlPanel({
   isPlaying,
@@ -12,8 +11,9 @@ function ControlPanel({
   onRefresh,
   onBpmChange,
   onAddMeasure,
+  beatsPerMeasure,
+  setBeatsPerMeasure,
 }) {
-  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
       <Stack

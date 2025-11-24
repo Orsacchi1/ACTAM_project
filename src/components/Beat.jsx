@@ -62,7 +62,7 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
           <Box
             sx={{
               width: 2,
-              height: beatInMeasure === 0 ? 50 : 40,
+              height: beatInMeasure === 0 ? 60 : 50,
               backgroundColor: beatInMeasure === 0 ? "#333" : "#666",
               transition: "all 0.1s ease",
             }}
@@ -87,7 +87,7 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
           <Box
             sx={{
               width: 2,
-              height: 28,
+              height: 38,
               backgroundColor: "#999",
               transition: "all 0.1s ease",
             }}
@@ -108,7 +108,8 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
           sx={{
             display: "flex",
             flexDirection: "row",
-            height: 18,
+            height: 22,
+            minHeight: 22,
           }}
         >
           {/* Number aligned with first half tick */}
