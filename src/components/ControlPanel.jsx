@@ -1,5 +1,6 @@
 import { Button, TextField, Paper, Stack, Typography } from "@mui/material";
 import { PlayArrow, Stop, Replay, Refresh, Add } from "@mui/icons-material";
+import { useState } from "react";
 
 function ControlPanel({
   isPlaying,
@@ -12,6 +13,7 @@ function ControlPanel({
   onBpmChange,
   onAddMeasure,
 }) {
+  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
       <Stack
@@ -68,7 +70,20 @@ function ControlPanel({
           sx={{ width: 100 }}
         />
 
-        <Button variant="outlined" onClick={onAddMeasure} startIcon={<Add />}>
+        <TextField
+          label="Beats"
+          type="number"
+          value={beatsPerMeasure}
+          onChange={(e) => setBeatsPerMeasure(Number(e.target.value))}
+          inputProps={{ min: 1, max: 15 }}
+          sx={{ width: 100 }}
+        />
+
+        <Button
+          variant="outlined"
+          onClick={() => onAddMeasure(beatsPerMeasure)}
+          startIcon={<Add />}
+        >
           Add Measure
         </Button>
 

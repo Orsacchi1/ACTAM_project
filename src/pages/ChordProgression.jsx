@@ -38,7 +38,7 @@ function ChordProgression({
       <ControlPanel
         isPlaying={isPlaying}
         bpm={bpm}
-        measures={measures}
+        measures={measures.length}
         onPlay={togglePlay}
         onStop={stopPlay}
         onReplay={replayFromStart}

@@ -24,12 +24,15 @@ function App() {
   // Music state
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [measures, setMeasures] = useState(4);
+  const [measures, setMeasures] = useState([4, 4, 4, 4]); // Array storing beats per measure
   const [currentBeat, setCurrentBeat] = useState(0);
   const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: { first, second } }
   const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
   const intervalRef = useRef(null);
   const halfBeatTimeoutRef = useRef(null);
+
+  // Calculate total beats across all measures
+  const totalBeats = measures.reduce((sum, beats) => sum + beats, 0);
 
   // Calculate time interval per beat (milliseconds)
   const beatInterval = (60 / bpm) * 1000;
@@ -61,7 +64,7 @@ function App() {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prev) => {
-          const nextBeat = (prev + 1) % (measures * 4);
+          const nextBeat = (prev + 1) % totalBeats;
           const chords = beatChords[nextBeat];
 
           // Play first half chord immediately
@@ -99,7 +102,7 @@ function App() {
   }, [
     isPlaying,
     bpm,
-    measures,
+    totalBeats,
     beatInterval,
     halfBeatInterval,
     beatChords,
@@ -124,13 +127,13 @@ function App() {
   const refreshPage = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
-    setMeasures(4);
+    setMeasures([4, 4, 4, 4]);
     setBpm(120);
     setBeatChords({});
   };
 
-  const addMeasure = () => {
-    setMeasures((prev) => prev + 1);
+  const addMeasure = (beatsPerMeasure = 4) => {
+    setMeasures((prev) => [...prev, beatsPerMeasure]);
   };
 
   const handleBpmChange = (e) => {

@@ -1,7 +1,16 @@
 import { Box, Typography } from "@mui/material";
 import Beat from "./Beat";
 
-function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
+function Measure({
+  measureIndex,
+  currentBeat,
+  onBeatClick,
+  beatChords,
+  beatsPerMeasure = 4,
+  startBeat = 0,
+}) {
+  const beats = Array.from({ length: beatsPerMeasure }, (_, i) => i);
+
   return (
     <Box
       sx={{
@@ -38,8 +47,8 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
           borderBottom: "1px solid #e0e0e0",
         }}
       >
-        {[0, 1, 2, 3].map((beatInMeasure) => {
-          const absoluteBeat = measureIndex * 4 + beatInMeasure;
+        {beats.map((beatInMeasure) => {
+          const absoluteBeat = startBeat + beatInMeasure;
           const chords = beatChords[absoluteBeat];
           return (
             <Box
@@ -49,7 +58,10 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                borderRight: beatInMeasure < 3 ? "1px solid #f0f0f0" : "none",
+                borderRight:
+                  beatInMeasure < beatsPerMeasure - 1
+                    ? "1px solid #f0f0f0"
+                    : "none",
               }}
             >
               {/* First half chord */}
@@ -94,10 +106,10 @@ function Measure({ measureIndex, currentBeat, onBeatClick, beatChords }) {
         })}
       </Box>
 
-      {/* 4 Beats */}
+      {/* Beats */}
       <Box sx={{ display: "flex", flex: 1 }}>
-        {[0, 1, 2, 3].map((beatInMeasure) => {
-          const absoluteBeat = measureIndex * 4 + beatInMeasure;
+        {beats.map((beatInMeasure) => {
+          const absoluteBeat = startBeat + beatInMeasure;
           const chords = beatChords[absoluteBeat];
           return (
             <Beat
