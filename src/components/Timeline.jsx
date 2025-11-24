@@ -1,7 +1,14 @@
 import { Paper, Box } from "@mui/material";
 import Measure from "./Measure";
 
-function Timeline({ measures, currentBeat, onBeatClick, beatChords }) {
+function Timeline({
+  measures,
+  currentBeat,
+  onBeatClick,
+  beatChords,
+  beatVelocities,
+  onVelocitySelect,
+}) {
   // Calculate start beat for each measure
   const getStartBeat = (measureIndex) => {
     return measures
@@ -42,6 +49,8 @@ function Timeline({ measures, currentBeat, onBeatClick, beatChords }) {
                       currentBeat={currentBeat}
                       onBeatClick={onBeatClick}
                       beatChords={beatChords}
+                      beatVelocities={beatVelocities}
+                      onVelocitySelect={onVelocitySelect}
                       beatsPerMeasure={beatsPerMeasure}
                       startBeat={startBeat}
                     />

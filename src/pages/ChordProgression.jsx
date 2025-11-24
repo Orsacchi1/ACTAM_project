@@ -10,6 +10,7 @@ function ChordProgression({
   measures,
   currentBeat,
   beatChords,
+  beatVelocities,
   selectedBeat,
   togglePlay,
   stopPlay,
@@ -19,9 +20,16 @@ function ChordProgression({
   handleBpmChange,
   handleBeatClick,
   handleChordSelect,
+  handleVelocitySelect,
   setSelectedBeat,
   soundEngine = null,
 }) {
+  // Adapter function for ChordSelector's onBeatBpmChange
+  // ChordSelector passes (beatIndex, half, value) but we only need (beatIndex, value)
+  const handleBeatBpmChange = (beatIndex, _half, value) => {
+    handleVelocitySelect(beatIndex, value);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Title and Description */}
@@ -53,6 +61,8 @@ function ChordProgression({
         currentBeat={currentBeat}
         onBeatClick={handleBeatClick}
         beatChords={beatChords}
+        beatVelocities={beatVelocities}
+        onVelocitySelect={handleVelocitySelect}
       />
 
       {/* Status Display */}
@@ -70,6 +80,11 @@ function ChordProgression({
             ? beatChords[selectedBeat.beatIndex]?.[selectedBeat.half]
             : null
         }
+        beatBpm={
+          selectedBeat ? beatVelocities[selectedBeat.beatIndex] : undefined
+        }
+        defaultBpm={bpm}
+        onBeatBpmChange={handleBeatBpmChange}
       />
     </Container>
   );

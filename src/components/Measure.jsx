@@ -6,6 +6,8 @@ function Measure({
   currentBeat,
   onBeatClick,
   beatChords,
+  beatVelocities,
+  onVelocitySelect,
   beatsPerMeasure = 4,
   startBeat = 0,
 }) {
@@ -37,6 +39,67 @@ function Measure({
       >
         {measureIndex + 1}
       </Typography>
+
+      {/* Velocity display layer */}
+      <Box
+        sx={{
+          display: "flex",
+          height: 16,
+          alignItems: "center",
+          borderBottom: "1px solid #f5f5f5",
+        }}
+      >
+        {beats.map((beatInMeasure) => {
+          const absoluteBeat = startBeat + beatInMeasure;
+          const velocity = beatVelocities?.[absoluteBeat];
+          return (
+            <Box
+              key={beatInMeasure}
+              onClick={() => {
+                const newVelocity = prompt(
+                  `设置拍子 ${absoluteBeat + 1} 的速度 (40-240 BPM):`,
+                  velocity || 120
+                );
+                if (newVelocity) {
+                  const vel = parseInt(newVelocity);
+                  if (vel >= 40 && vel <= 240) {
+                    onVelocitySelect(absoluteBeat, vel);
+                  } else {
+                    alert("速度必须在 40-240 之间");
+                  }
+                }
+              }}
+              sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                borderRight:
+                  beatInMeasure < beatsPerMeasure - 1
+                    ? "1px solid #f0f0f0"
+                    : "none",
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "rgba(156, 39, 176, 0.08)",
+                },
+              }}
+            >
+              {velocity && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "0.7rem",
+                    color: "secondary.main",
+                    fontWeight: "500",
+                  }}
+                >
+                  {velocity}
+                </Typography>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
 
       {/* Chord display layer */}
       <Box

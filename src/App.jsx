@@ -27,6 +27,7 @@ function App() {
   const [measures, setMeasures] = useState([4, 4, 4, 4]); // Array storing beats per measure
   const [currentBeat, setCurrentBeat] = useState(0);
   const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: { first, second } }
+  const [beatVelocities, setBeatVelocities] = useState({}); // Store velocity for each beat's first half { beatIndex: velocity }
   const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
   const intervalRef = useRef(null);
   const halfBeatTimeoutRef = useRef(null);
@@ -67,6 +68,12 @@ function App() {
           const nextBeat = (prev + 1) % totalBeats;
           const chords = beatChords[nextBeat];
 
+          // Check if next beat has custom velocity and update BPM
+          const nextBeatVelocity = beatVelocities[nextBeat];
+          if (nextBeatVelocity !== undefined) {
+            setBpm(nextBeatVelocity);
+          }
+
           // Play first half chord immediately
           if (chords?.first) {
             playChord(chords.first);
@@ -106,6 +113,7 @@ function App() {
     beatInterval,
     halfBeatInterval,
     beatChords,
+    beatVelocities,
     playChord,
   ]);
 
@@ -145,6 +153,21 @@ function App() {
 
   const handleBeatClick = (beatIndex, half) => {
     setSelectedBeat({ beatIndex, half });
+  };
+
+  // Handle velocity change for beat's first half
+  const handleVelocitySelect = (beatIndex, velocity) => {
+    setBeatVelocities((prev) => {
+      const newVelocities = { ...prev };
+
+      if (velocity === null || velocity === undefined) {
+        delete newVelocities[beatIndex];
+      } else {
+        newVelocities[beatIndex] = velocity;
+      }
+
+      return newVelocities;
+    });
   };
 
   const handleChordSelect = (beatIndex, half, chord) => {
@@ -225,6 +248,7 @@ function App() {
           measures={measures}
           currentBeat={currentBeat}
           beatChords={beatChords}
+          beatVelocities={beatVelocities}
           selectedBeat={selectedBeat}
           togglePlay={togglePlay}
           stopPlay={stopPlay}
@@ -232,6 +256,7 @@ function App() {
           refreshPage={refreshPage}
           addMeasure={addMeasure}
           handleBpmChange={handleBpmChange}
+          handleVelocitySelect={handleVelocitySelect}
           handleBeatClick={handleBeatClick}
           handleChordSelect={handleChordSelect}
           setSelectedBeat={setSelectedBeat}
