@@ -17,29 +17,53 @@ import { audioEngine } from "./utils/audioEngine";
 import "./App.css";
 
 function App() {
-  // Navigation state
+  // ========== Navigation State ==========
   const [currentPage, setCurrentPage] = useState("chordProgression");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Music state
+  // ========== Music State ==========
+  // Global BPM setting - can be overridden by per-beat velocities
   const [bpm, setBpm] = useState(120);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [measures, setMeasures] = useState([4, 4, 4, 4]); // Array storing beats per measure
-  const [currentBeat, setCurrentBeat] = useState(0);
-  const [beatChords, setBeatChords] = useState({}); // Store chords for each beat { beatIndex: { first, second } }
-  const [beatVelocities, setBeatVelocities] = useState({}); // Store velocity for each beat's first half { beatIndex: velocity }
-  const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
-  const intervalRef = useRef(null);
-  const halfBeatTimeoutRef = useRef(null);
 
+  // Playback control
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Measures array: each element represents beats per measure
+  // Example: [4, 4, 4, 4] = four measures with 4 beats each
+  const [measures, setMeasures] = useState([4, 4, 4, 4]);
+
+  // Current beat index (0-based) across all measures
+  const [currentBeat, setCurrentBeat] = useState(0);
+
+  // Beat chords: { beatIndex: { first: "Cmaj7", second: "G7" } }
+  // Stores chord for first and second half of each beat
+  const [beatChords, setBeatChords] = useState({});
+
+  // Beat velocities: { beatIndex: bpmValue }
+  // Stores custom BPM for specific beats (overrides global BPM)
+  const [beatVelocities, setBeatVelocities] = useState({});
+
+  // Currently selected beat for chord/tempo editing
+  const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
+
+  // Refs for playback intervals
+  const intervalRef = useRef(null); // Main beat interval
+  const halfBeatTimeoutRef = useRef(null); // Second half beat timeout
+
+  // ========== Calculated Values ==========
   // Calculate total beats across all measures
   const totalBeats = measures.reduce((sum, beats) => sum + beats, 0);
 
   // Calculate time interval per beat (milliseconds)
+  // Used by setInterval for playback timing
   const beatInterval = (60 / bpm) * 1000;
   const halfBeatInterval = beatInterval / 2;
 
-  // Helper function to extract root note from chord name
+  // ========== Helper Functions ==========
+  /**
+   * Extract root note from chord name
+   * Example: "Cmaj7" -> "C", "F#m" -> "F#"
+   */
   const extractRootNote = (chordName) => {
     if (!chordName) return null;
     if (chordName.length >= 2 && chordName[1] === "#") {
@@ -48,12 +72,26 @@ function App() {
     return chordName[0]; // C, D, E, etc.
   };
 
-  // Helper function to play chord
+  /**
+   * Play chord using audioEngine
+   *
+   * TODO: This currently only plays the root note of the chord.
+   * Future improvements needed:
+   * 1. Play full chord (root + 3rd + 5th + extensions)
+   * 2. Implement different voicings based on chord type
+   * 3. Add velocity/volume control
+   * 4. Support chord inversions
+   * 5. Add ADSR envelope shaping
+   *
+   * @param {string} chordName - Chord name (e.g., "Cmaj7", "Dm", "G7")
+   */
   const playChord = useCallback(
     (chordName) => {
       if (chordName) {
         const rootNote = extractRootNote(chordName);
         if (rootNote) {
+          // AUDIO ENGINE: Play chord root note
+          // TODO: Replace with full chord playback
           audioEngine.playChordRoot(rootNote, bpm);
         }
       }
@@ -61,25 +99,38 @@ function App() {
     [bpm]
   );
 
+  /**
+   * Main playback loop
+   *
+   * This effect handles the core playback logic:
+   * 1. Advances beat counter on each interval
+   * 2. Applies per-beat custom tempo if set
+   * 3. Plays chords for first and second half of beat
+   * 4. Cleans up intervals on stop or unmount
+   */
   useEffect(() => {
     if (isPlaying) {
+      // Set up interval to advance beats
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prev) => {
+          // Calculate next beat (loops back to 0 after last beat)
           const nextBeat = (prev + 1) % totalBeats;
           const chords = beatChords[nextBeat];
 
-          // Check if next beat has custom velocity and update BPM
+          // Apply per-beat custom tempo if set
+          // This allows tempo changes mid-playback
           const nextBeatVelocity = beatVelocities[nextBeat];
           if (nextBeatVelocity !== undefined) {
             setBpm(nextBeatVelocity);
           }
 
-          // Play first half chord immediately
+          // AUDIO ENGINE: Play first half chord immediately
           if (chords?.first) {
             playChord(chords.first);
           }
 
-          // Schedule second half chord
+          // AUDIO ENGINE: Schedule second half chord
+          // Plays at the midpoint of the beat
           if (chords?.second) {
             halfBeatTimeoutRef.current = setTimeout(() => {
               playChord(chords.second);
@@ -117,11 +168,18 @@ function App() {
     playChord,
   ]);
 
+  /**
+   * Start playback from current beat
+   *
+   * AUDIO ENGINE: Initializes audio context (requires user interaction)
+   * Applies current beat's custom tempo if set
+   */
   const togglePlay = () => {
-    // Initialize audio engine on first play (requires user interaction)
+    // AUDIO ENGINE: Initialize audio context
+    // Note: Must be called after user interaction (browser requirement)
     audioEngine.init();
 
-    // Check if current beat has custom velocity and apply it
+    // Apply current beat's custom velocity if set
     const currentBeatVelocity = beatVelocities[currentBeat];
     if (currentBeatVelocity !== undefined) {
       setBpm(currentBeatVelocity);
@@ -130,14 +188,21 @@ function App() {
     setIsPlaying(true);
   };
 
+  /**
+   * Pause playback (maintains current beat position)
+   */
   const stopPlay = () => {
     setIsPlaying(false);
   };
 
+  /**
+   * Restart playback from beat 0
+   * Applies first beat's custom tempo if set
+   */
   const replayFromStart = () => {
     setCurrentBeat(0);
 
-    // Check if first beat (beat 0) has custom velocity and apply it
+    // Apply first beat's custom velocity if set
     const firstBeatVelocity = beatVelocities[0];
     if (firstBeatVelocity !== undefined) {
       setBpm(firstBeatVelocity);
@@ -146,18 +211,34 @@ function App() {
     setIsPlaying(true);
   };
 
+  /**
+   * Reset all state to initial values
+   * Clears all chords, tempos, and resets to 4 measures
+   */
   const refreshPage = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
     setMeasures([4, 4, 4, 4]);
     setBpm(120);
     setBeatChords({});
+    // Note: beatVelocities not cleared - add if needed
   };
 
+  /**
+   * Add a new measure at the end
+   * @param {number} beatsPerMeasure - Number of beats in the new measure
+   */
   const addMeasure = (beatsPerMeasure = 4) => {
     setMeasures((prev) => [...prev, beatsPerMeasure]);
   };
 
+  /**
+   * Insert a new measure after specified index
+   * Automatically shifts beat indices for chords and velocities
+   *
+   * @param {number} afterMeasureIndex - Insert after this measure (0-based)
+   * @param {number} beatsPerMeasure - Number of beats in new measure
+   */
   const insertMeasure = (afterMeasureIndex, beatsPerMeasure = 4) => {
     // Calculate the beat position where the new measure will be inserted
     const insertBeat = measures
@@ -209,7 +290,15 @@ function App() {
     });
   };
 
+  /**
+   * Delete a measure at specified index
+   * Automatically shifts beat indices for chords and velocities
+   * Validates minimum 1 measure requirement
+   *
+   * @param {number} measureIndex - Index of measure to delete (0-based)
+   */
   const deleteMeasure = (measureIndex) => {
+    // Validation: at least one measure must remain
     if (measures.length <= 1) {
       alert("At least one measure must be kept");
       return;
@@ -267,6 +356,10 @@ function App() {
     });
   };
 
+  /**
+   * Handle global BPM change from control panel
+   * Validates range 1-300 BPM
+   */
   const handleBpmChange = (e) => {
     const value = parseInt(e.target.value);
     if (value > 0 && value <= 300) {
@@ -274,11 +367,20 @@ function App() {
     }
   };
 
+  /**
+   * Handle beat click - opens ChordSelector dialog
+   * @param {number} beatIndex - Absolute beat index
+   * @param {string} half - "first" or "second" half of beat
+   */
   const handleBeatClick = (beatIndex, half) => {
     setSelectedBeat({ beatIndex, half });
   };
 
-  // Handle velocity change for beat's first half
+  /**
+   * Handle per-beat velocity (tempo) change
+   * @param {number} beatIndex - Absolute beat index
+   * @param {number|null} velocity - BPM value or null to clear
+   */
   const handleVelocitySelect = (beatIndex, velocity) => {
     setBeatVelocities((prev) => {
       const newVelocities = { ...prev };
@@ -293,21 +395,32 @@ function App() {
     });
   };
 
+  /**
+   * Handle chord selection for a beat half
+   * Manages beatChords state object structure
+   *
+   * @param {number} beatIndex - Absolute beat index
+   * @param {string} half - "first" or "second" half of beat
+   * @param {string|null} chord - Chord name or null to clear
+   */
   const handleChordSelect = (beatIndex, half, chord) => {
     setBeatChords((prev) => {
       const newChords = { ...prev };
 
+      // Initialize beat entry if doesn't exist
       if (!newChords[beatIndex]) {
         newChords[beatIndex] = {};
       }
 
       if (chord === null) {
+        // Clear the specified half
         delete newChords[beatIndex][half];
-        // Remove beat entry if both halves are empty
+        // Remove beat entry if both halves are empty (cleanup)
         if (!newChords[beatIndex].first && !newChords[beatIndex].second) {
           delete newChords[beatIndex];
         }
       } else {
+        // Set the chord for specified half
         newChords[beatIndex][half] = chord;
       }
 

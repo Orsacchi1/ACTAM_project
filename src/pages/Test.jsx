@@ -152,14 +152,23 @@ function Test() {
 │    └─── Drawer (Side Navigation Menu)
 │
 ├─── Page: ChordProgression.jsx
-│    ├─── ControlPanel.jsx (Play/Stop/BPM Controls)
+│    ├─── ControlPanel.jsx (Play/Stop/BPM/Beats Controls)
+│    │    ├─── Play/Pause/Replay/Reset Buttons
+│    │    ├─── BPM Input Field (Global Tempo)
+│    │    ├─── Beats Per Measure Input
+│    │    └─── Add Measure Button
 │    ├─── Timeline.jsx (Measures Container)
-│    │    └─── Measure.jsx (×4 for 4 measures)
-│    │         └─── Beat.jsx (×4 beats per measure)
-│    │              ├─── First Half (Click Area)
-│    │              └─── Second Half (Click Area)
+│    │    └─── Measure.jsx (Dynamic count, variable beats)
+│    │         ├─── Delete Button (Red X icon)
+│    │         ├─── Insert Button (Green + icon)
+│    │         ├─── Velocity Display Row (Purple tempo values)
+│    │         ├─── Chord Display Row (Split for half-beats)
+│    │         └─── Beat.jsx (×N beats per measure)
+│    │              ├─── First Half (Click Area for chord/tempo)
+│    │              └─── Second Half (Click Area for chord)
 │    ├─── StatusDisplay.jsx (Current Beat/Measure Display)
-│    └─── ChordSelector.jsx (Chord Selection Dialog)
+│    └─── ChordSelector.jsx (Chord & Tempo Selection Dialog)
+│         ├─── Tempo Section (BPM input with Apply/Clear)
 │         ├─── Step 1: Select Root Note (C, C#, D, ...)
 │         └─── Step 2: Select Quality (Major, Minor, 7, ...)
 │
@@ -167,7 +176,8 @@ function Test() {
 │    └─── (Future: Sound synthesis controls)
 │
 └─── Page: Test.jsx
-     └─── Knob.jsx (Parameter Control Demos)`}
+     ├─── Knob.jsx (Parameter Control Demos)
+     └─── BarChart.jsx (Visualization Demo)`}
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -182,28 +192,48 @@ function Test() {
   1: { first: "F" },                    // Measure 1, Beat 2 (first half only)
   4: { second: "G7" },                  // Measure 2, Beat 1 (second half only)
   7: { first: "Dm", second: "G" },     // Measure 2, Beat 4
-  // ... up to beat index (measures * 4 - 1)
+  // ... up to beat index (total beats - 1)
 }
-// - beatIndex = measureIndex * 4 + beatIndex (0-based)
+// - beatIndex = absolute position across all measures
 // - Empty beats are omitted (not stored)
 // - Each beat can have 0, 1, or 2 chords
 
-// 2. selectedBeat - Currently selected beat for editing
+// 2. beatVelocities - Stores per-beat custom tempo (NEW!)
+// Structure: { [beatIndex: number]: bpm }
+// Example:
+{
+  0: 140,    // Beat 0 plays at 140 BPM
+  5: 100,    // Beat 5 plays at 100 BPM
+  // Other beats use global BPM
+}
+// - Allows tempo changes mid-playback
+// - Overrides global BPM setting for specific beats
+// - Applied automatically during playback
+
+// 3. measures - Array storing beats per measure (NEW!)
+// Structure: number[] (each element = beats in that measure)
+// Example:
+[4, 4, 3, 5, 4]  // 5 measures with varying beat counts
+// - Enables variable time signatures
+// - Total beats = measures.reduce((sum, beats) => sum + beats, 0)
+// - Beat index calculation: sum of previous measures + beat in current
+
+// 4. selectedBeat - Currently selected beat for editing
 // Structure: { beatIndex: number, half: "first" | "second" } | null
 // Example:
-{ beatIndex: 3, half: "first" }        // Measure 1, Beat 4, first half
+{ beatIndex: 3, half: "first" }        // Beat 3, first half
 // - Used to track which beat half is being edited
 // - Opens ChordSelector with this context
 
-// 3. Music Playback State
+// 5. Music Playback State
 {
-  bpm: 120,                              // Beats per minute (1-300)
+  bpm: 120,                              // Global BPM (1-300)
   isPlaying: false,                      // Playback status
-  measures: 4,                           // Number of measures
-  currentBeat: 0,                        // Current playing beat (0 to measures*4-1)
+  measures: [4, 4, 4, 4],               // Array of beats per measure
+  currentBeat: 0,                        // Current playing beat (0 to totalBeats-1)
 }
 
-// 4. Navigation State
+// 6. Navigation State
 {
   currentPage: "chordProgression",       // Active page ID
   drawerOpen: false,                     // Side menu visibility
@@ -215,19 +245,43 @@ function Test() {
         </Typography>
         <Box component="pre" sx={codeBlockStyle}>
           {`User Interaction Flow (Chord Selection):
-1. User clicks beat half → Beat.jsx calls onClick(half)
+1. User clicks beat half → Beat.jsx calls onClick(beatIndex, half)
 2. ChordProgression calls handleBeatClick(beatIndex, half)
 3. App.jsx updates selectedBeat = { beatIndex, half }
 4. Single ChordSelector dialog opens (open={selectedBeat !== null})
    - Displays current chord for this specific beat/half
+   - Displays current tempo for this beat (NEW!)
    - Same dialog instance, different content based on selectedBeat
-5. User selects chord → ChordSelector calls onSelect(chord)
-6. ChordProgression calls handleChordSelect(beatIndex, half, chord)
-7. App.jsx updates beatChords state:
-   - Creates/updates entry: beatChords[beatIndex][half] = chord
-   - Or removes chord if chord === null
+5. User selects chord → ChordSelector calls onSelect(beatIndex, half, chord)
+6. User sets tempo → ChordSelector calls onBeatBpmChange(beatIndex, half, bpm)
+7. App.jsx updates states:
+   - beatChords: Creates/updates/removes chord
+   - beatVelocities: Creates/updates/removes custom BPM
 8. App.jsx sets selectedBeat = null (closes dialog)
-9. Timeline re-renders, showing updated chord in Beat component
+9. Timeline re-renders, showing updated chord and tempo
+
+Tempo Edit Flow (Click on Velocity Display):
+1. User clicks tempo value in Measure component
+2. Browser prompt appears asking for new BPM (40-240)
+3. handleVelocitySelect(beatIndex, newBPM) called
+4. App.jsx updates beatVelocities[beatIndex] = newBPM
+5. Measure re-renders showing new tempo value
+
+Measure Management Flow:
+1. Insert Measure:
+   - User clicks green + button on Measure
+   - insertMeasure(afterMeasureIndex, beatsPerMeasure) called
+   - New measure inserted at position
+   - All beat indices after insertion point shift up
+   - beatChords and beatVelocities automatically adjusted
+
+2. Delete Measure:
+   - User clicks red X button on Measure
+   - deleteMeasure(measureIndex) called
+   - Validates minimum 1 measure
+   - Measure removed from array
+   - Beat indices shift down
+   - Data for deleted beats removed
 
 Key Point: ChordSelector Singleton Pattern
   ✓ Only ONE ChordSelector instance exists
@@ -235,16 +289,27 @@ Key Point: ChordSelector Singleton Pattern
   ✓ Same dialog shows different data based on selectedBeat
   ✓ Efficient: No need to create/destroy dialogs for each beat
 
-Playback Flow:
+Playback Flow (with Dynamic Tempo):
 1. User clicks Play → togglePlay() in App.jsx
+   - Checks if current beat has custom velocity
+   - Applies it with setBpm() if exists
 2. setInterval triggers every (60/bpm * 1000) milliseconds
 3. Each interval:
-   - currentBeat increments (wraps at measures * 4)
+   - currentBeat increments (wraps at total beats)
+   - Checks beatVelocities[nextBeat] (NEW!)
+   - If custom velocity exists, calls setBpm(velocity)
    - Reads beatChords[currentBeat]
    - Plays first half chord immediately via audioEngine
    - Schedules second half chord with setTimeout (half beat delay)
 4. Beat component receives isActive={beat === currentBeat}
-5. Active beat shows visual animation`}
+5. Active beat shows visual animation
+
+Replay Flow:
+1. User clicks Replay → replayFromStart() in App.jsx
+   - Sets currentBeat to 0
+   - Checks beatVelocities[0]
+   - Applies first beat's custom velocity if exists
+   - Starts playback from beginning`}
         </Box>
       </Paper>
 
@@ -308,20 +373,27 @@ Features:
         <Box component="pre" sx={codeBlockStyle}>
           {`Props:
   - isPlaying: boolean
-  - bpm: number
-  - measures: number
-  - onPlay: () => void         // Start playback
-  - onStop: () => void         // Stop playback
-  - onReplay: () => void       // Restart from beginning
-  - onRefresh: () => void      // Reset all state
-  - onBpmChange: (e) => void   // BPM input change
-  - onAddMeasure: () => void   // Add new measure
+  - bpm: number                         // Global tempo
+  - measures: number                    // Measure count (for display)
+  - beatsPerMeasure: number (NEW!)     // Beats for new measures
+  - setBeatsPerMeasure: (n) => void (NEW!)  // Update beats value
+  - onPlay: () => void                  // Start playback
+  - onStop: () => void                  // Stop playback
+  - onReplay: () => void                // Restart from beginning
+  - onRefresh: () => void               // Reset all state
+  - onBpmChange: (e) => void            // Global BPM input change
+  - onAddMeasure: () => void            // Add new measure
 
 Features:
   - Play/Stop/Replay/Refresh buttons
-  - BPM input field (1-300)
+  - Global BPM input field (1-300)
+  - Beats per measure input (1-15) (NEW!)
   - Measure count display
-  - Add measure button`}
+  - Add measure button (uses beatsPerMeasure value)
+
+Note: beatsPerMeasure state lifted to ChordProgression
+  - Shared between ControlPanel (input) and Timeline (insert)
+  - Ensures consistent beat count across add/insert operations`}
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -329,12 +401,23 @@ Features:
         </Typography>
         <Box component="pre" sx={codeBlockStyle}>
           {`Props:
-  - open: boolean              // Controlled by selectedBeat !== null
+  - open: boolean                    // Controlled by selectedBeat !== null
   - onClose: () => void
-  - onSelect: (beatIndex, half, chord) => void  // Callback with full context
-  - beatIndex: number          // From selectedBeat.beatIndex
-  - half: "first" | "second"   // From selectedBeat.half
-  - currentChord: string       // Current chord at this beat/half
+  - onSelect: (beatIndex, half, chord) => void     // Chord callback
+  - onBeatBpmChange: (beatIndex, half, bpm) => void (NEW!)  // Tempo callback
+  - beatIndex: number                // From selectedBeat.beatIndex
+  - half: "first" | "second"         // From selectedBeat.half
+  - currentChord: string             // Current chord at this beat/half
+  - beatBpm: number (NEW!)           // Current custom BPM for this beat
+  - defaultBpm: number (NEW!)        // Global BPM for reference
+
+How Tempo Setting Works (NEW!):
+  - TextField for BPM input (30-300 range)
+  - Apply button: Sets custom tempo for this beat
+    → onBeatBpmChange(beatIndex, half, bpmValue)
+  - Clear button: Removes custom tempo
+    → onBeatBpmChange(beatIndex, half, null)
+  - Placeholder shows default BPM if no custom tempo set
 
 How Chord Selection Works (Two-Step Process):
 
@@ -360,28 +443,48 @@ How Chord Selection Works (Two-Step Process):
     - Passing null removes the chord from beatChords
 
 Callback Flow to Parent (App.jsx):
-  ChordSelector.onSelect(beatIndex, half, chord)
-    ↓
-  handleChordSelect(beatIndex, half, chord) in App.jsx
-    ↓
-  setBeatChords((prev) => {
-    const newChords = { ...prev };
-    if (!newChords[beatIndex]) newChords[beatIndex] = {};
-    
-    if (chord === null) {
-      delete newChords[beatIndex][half];  // Remove chord
-    } else {
-      newChords[beatIndex][half] = chord; // Set chord
-    }
-    
-    return newChords;
-  })
+  1. Chord Selection:
+     ChordSelector.onSelect(beatIndex, half, chord)
+       ↓
+     handleChordSelect(beatIndex, half, chord) in App.jsx
+       ↓
+     setBeatChords((prev) => {
+       const newChords = { ...prev };
+       if (!newChords[beatIndex]) newChords[beatIndex] = {};
+       
+       if (chord === null) {
+         delete newChords[beatIndex][half];  // Remove chord
+       } else {
+         newChords[beatIndex][half] = chord; // Set chord
+       }
+       
+       return newChords;
+     })
+
+  2. Tempo Setting (NEW!):
+     ChordSelector.onBeatBpmChange(beatIndex, half, bpm)
+       ↓
+     handleBeatBpmChange(beatIndex, _half, bpm) in ChordProgression
+       ↓
+     handleVelocitySelect(beatIndex, bpm) in App.jsx
+       ↓
+     setBeatVelocities((prev) => {
+       const newVelocities = { ...prev };
+       
+       if (bpm === null) {
+         delete newVelocities[beatIndex];  // Remove custom tempo
+       } else {
+         newVelocities[beatIndex] = bpm;   // Set custom tempo
+       }
+       
+       return newVelocities;
+     })
 
 Key Design: Callback Pattern
   ✓ ChordSelector doesn't manage global state
   ✓ Only knows about: beatIndex, half (from props)
-  ✓ Returns selection via onSelect callback
-  ✓ Parent (App.jsx) decides how to update beatChords
+  ✓ Returns selection via callbacks
+  ✓ Parent (App.jsx) decides how to update state
   ✓ Clean separation of concerns`}
         </Box>
 
@@ -390,16 +493,28 @@ Key Design: Callback Pattern
         </Typography>
         <Box component="pre" sx={codeBlockStyle}>
           {`Props:
-  - measures: number           // Number of measures to display
-  - currentBeat: number        // Current playing beat index
-  - beatChords: object         // All chord data
-  - onBeatClick: (beatIndex, half) => void  // Beat click handler
+  - measures: number[]                // Array of beats per measure (NEW!)
+  - currentBeat: number               // Current playing beat index
+  - beatChords: object                // All chord data
+  - beatVelocities: object (NEW!)     // All per-beat tempo data
+  - onBeatClick: (beatIndex, half) => void      // Beat click handler
+  - onVelocitySelect: (beatIndex, bpm) => void (NEW!)  // Tempo click
+  - onInsertMeasure: (afterIndex, beats) => void (NEW!)  // Insert
+  - onDeleteMeasure: (measureIndex) => void (NEW!)      // Delete
+  - beatsPerMeasure: number (NEW!)    // Beats for new inserts (renamed beatsToInsert)
 
 Features:
   - Container for all Measure components
-  - Renders measures dynamically based on count
-  - Passes down beat state and chord data
-  - Horizontal scrollable layout for many measures`}
+  - Renders measures dynamically based on array length
+  - Calculates start beat for each measure
+  - Passes down beat state, chord data, and tempo data
+  - 4 measures per row layout with colored backgrounds
+  - Horizontal scrollable for many measures
+
+Note: Prop renamed internally
+  - Receives: beatsPerMeasure (from ControlPanel)
+  - Uses as: beatsToInsert (to avoid shadowing local variable)
+  - Fixed bug where local variable shadowed prop`}
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -407,22 +522,44 @@ Features:
         </Typography>
         <Box component="pre" sx={codeBlockStyle}>
           {`Props:
-  - measureIndex: number       // Measure number (0-based)
-  - currentBeat: number        // Current playing beat index
-  - beatChords: object         // All chord data
-  - onBeatClick: (beatIndex, half) => void  // Beat click handler
+  - measureIndex: number                  // Measure number (0-based)
+  - currentBeat: number                   // Current playing beat index
+  - beatChords: object                    // All chord data
+  - beatVelocities: object (NEW!)         // All per-beat tempo data
+  - onBeatClick: (beatIndex, half) => void         // Beat click handler
+  - onVelocitySelect: (beatIndex, bpm) => void (NEW!)  // Tempo handler
+  - onInsertMeasure: (measureIndex, beats) => void (NEW!)  // Insert
+  - onDeleteMeasure: (measureIndex) => void (NEW!)        // Delete
+  - beatsPerMeasure: number (NEW!)        // Beats in this measure (variable!)
+  - beatsToInsert: number (NEW!)          // Beats for insert operation
+  - startBeat: number                     // Starting beat index for this measure
 
 Structure:
-  - Three-layer vertical layout:
-    1. Measure number header
-    2. Chord display layer (split for half-beats)
-    3. Beat layer with 4 Beat components
+  - Four-layer vertical layout (NEW!):
+    1. Measure number header with Delete/Insert buttons
+    2. Velocity display layer (clickable tempo values)
+    3. Chord display layer (split for half-beats)
+    4. Beat layer with N Beat components (variable count)
 
 Features:
   - Shows measure number (1-based for display)
-  - Displays chords above beats
-  - Groups 4 beats per measure
-  - Calculates beat indices for child Beat components`}
+  - Delete button (red X icon) next to measure number
+    → Deletes this measure (validates min 1 measure)
+  - Insert button (green + icon) at right edge
+    → Inserts new measure after this one
+  - Velocity row: displays custom tempo for each beat
+    → Click to edit via browser prompt (40-240 BPM)
+    → Purple text color
+  - Chord row: displays chords above beats
+  - Variable beat count per measure (not always 4!)
+  - Calculates absolute beat indices for child Beat components
+  - Height: 150px (increased to fit tempo + chords)
+
+Layout Details:
+  Position: absolute; top: -20px  // Delete/Insert buttons
+  Height: 20px                     // Velocity row
+  Height: 24px                     // Chord row
+  Flex: 1                          // Beat layer`}
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -457,6 +594,187 @@ Features:
         </Box>
       </Paper>
 
+      {/* NEW FEATURES */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: "#e8f5e9" }}>
+        <Typography variant="h5" gutterBottom color="success.dark">
+          ✨ NEW FEATURES: Per-Beat Tempo & Measure Management
+        </Typography>
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+          1. Per-Beat Tempo Control
+        </Typography>
+        <Box component="pre" sx={codeBlockStyle}>
+          {`Feature: Set custom BPM for individual beats
+
+Data Structure:
+  beatVelocities = {
+    0: 140,   // Beat 0 plays at 140 BPM
+    5: 100,   // Beat 5 plays at 100 BPM
+    // Beats without entry use global BPM
+  }
+
+How it works:
+  1. Click on beat half in timeline → Opens ChordSelector
+  2. Enter BPM value in tempo field (30-300)
+  3. Click Apply → Stores in beatVelocities[beatIndex]
+  4. During playback:
+     - Before playing each beat, checks beatVelocities[nextBeat]
+     - If custom tempo exists, calls setBpm(velocity)
+     - Next interval uses new tempo automatically
+
+  5. Velocity display row shows custom tempo above beats (purple text)
+  6. Click tempo value → Quick edit via browser prompt
+
+Use cases:
+  - Ritardando (slowing down): 120 → 110 → 100 → 90
+  - Accelerando (speeding up): 100 → 110 → 120 → 130
+  - Tempo changes between sections
+  - Dynamic rhythm variations
+
+Smart playback initialization:
+  - Play button: Applies current beat's custom tempo
+  - Replay button: Applies first beat's (beat 0) custom tempo`}
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+          2. Measure CRUD Operations
+        </Typography>
+        <Box component="pre" sx={codeBlockStyle}>
+          {`Feature: Add, Insert, Delete measures with data integrity
+
+Data Structure:
+  measures = [4, 4, 3, 5, 4]  // Array of beats per measure
+  // Total beats = 4 + 4 + 3 + 5 + 4 = 20 beats
+
+Operations:
+
+A. Add Measure (at end):
+   - Click "Add Measure" in ControlPanel
+   - Appends new measure with beatsPerMeasure value
+   - measures.push(beatsPerMeasure)
+   - No data shifting needed
+
+B. Insert Measure (after any measure):
+   - Click green + icon on Measure component
+   - Inserts measure after clicked measure
+   - All data after insertion point shifts UP
+   
+   Example: Insert 3-beat measure after measure 1
+     Before: measures = [4, 4, 4]
+             beatChords = { 0: {...}, 4: {...}, 5: {...} }
+     
+     After:  measures = [4, 3, 4, 4]
+             beatChords = { 0: {...}, 7: {...}, 8: {...} }
+                                      ↑ shifted by 3
+     
+   Algorithm:
+     1. Calculate insertBeat = sum of beats before + current measure
+     2. Insert measure at position
+     3. Shift all beatChords keys >= insertBeat by beatsPerMeasure
+     4. Shift all beatVelocities keys >= insertBeat
+     5. Adjust currentBeat if >= insertBeat
+
+C. Delete Measure:
+   - Click red X icon on Measure component
+   - Validates minimum 1 measure (prevents empty timeline)
+   - All data after deletion point shifts DOWN
+   
+   Example: Delete measure 1 (4 beats)
+     Before: measures = [4, 4, 4]
+             beatChords = { 0: {...}, 5: {...}, 8: {...} }
+     
+     After:  measures = [4, 4]
+             beatChords = { 0: {...}, 4: {...} }
+                                      ↑ shifted down by 4
+     
+   Algorithm:
+     1. Calculate startBeat, endBeat of measure
+     2. Remove measure from array
+     3. Delete all beatChords keys in [startBeat, endBeat)
+     4. Shift beatChords keys >= endBeat DOWN by beatsInMeasure
+     5. Same for beatVelocities
+     6. Reset currentBeat if in deleted range
+
+Data Integrity:
+  ✓ Beat indices automatically recalculated
+  ✓ Chords and tempos move with their beats
+  ✓ No orphaned data left behind
+  ✓ Playback continues correctly after edit`}
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+          3. Variable Time Signatures
+        </Typography>
+        <Box component="pre" sx={codeBlockStyle}>
+          {`Feature: Different beat counts per measure
+
+Examples:
+  - [4, 4, 4, 4]      → Standard 4/4 time
+  - [3, 3, 3, 3]      → Waltz in 3/4 time
+  - [7, 7, 7, 7]      → Complex 7/4 time
+  - [4, 4, 3, 4]      → Mixed meters
+  - [5, 7, 4, 6]      → Progressive rock style
+
+Implementation:
+  - measures array stores beats per measure
+  - Each Measure component renders beatsPerMeasure beats
+  - Timeline calculates start beat for each measure:
+    
+    getStartBeat(measureIndex) {
+      return measures
+        .slice(0, measureIndex)
+        .reduce((sum, beats) => sum + beats, 0);
+    }
+  
+  - Total beats = measures.reduce((sum, beats) => sum + beats, 0)
+
+UI:
+  - "Beats" input in ControlPanel (1-15)
+  - Shared between Add Measure and Insert operations
+  - State lifted to ChordProgression level for consistency
+
+Beat Index Calculation:
+  Measure 0, Beat 2 in [4, 4, 3, 5]:
+    startBeat = 0
+    beatIndex = 0 + 2 = 2
+  
+  Measure 2, Beat 1 in [4, 4, 3, 5]:
+    startBeat = 4 + 4 = 8
+    beatIndex = 8 + 1 = 9`}
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+          4. UI Improvements
+        </Typography>
+        <Box component="pre" sx={codeBlockStyle}>
+          {`Spacing Adjustments:
+  - Measure height: 100px → 150px (to fit tempo + chords)
+  - Tempo row: 20px height (purple text)
+  - Chord row: 24px height (increased from 20px)
+  - Beat tick marks: 60/50/38px (increased from 50/40/28px)
+  - Beat number row: 22px height
+
+Color Coding:
+  - Tempo values: Purple (secondary.main)
+  - Delete button: Red (error.main)
+  - Insert button: Green (success.main)
+  - First half chords: Blue (primary.main)
+  - Second half chords: Purple (secondary.main)
+
+Interaction:
+  - Tempo values: Clickable with hover effect
+  - Delete/Insert buttons: IconButton with hover states
+  - Beat halves: Click area with hover background
+
+Validation:
+  - Global BPM: 1-300
+  - Per-beat tempo: 40-240
+  - Beats per measure: 1-15
+  - Minimum measures: 1 (cannot delete last measure)`}
+        </Box>
+      </Paper>
+
       {/* State Management with useState */}
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom>
@@ -473,21 +791,27 @@ Features:
 ├── const [drawerOpen, setDrawerOpen] = useState(false)
 ├── const [bpm, setBpm] = useState(120)
 ├── const [isPlaying, setIsPlaying] = useState(false)
-├── const [measures, setMeasures] = useState(4)
+├── const [measures, setMeasures] = useState([4, 4, 4, 4])  // Array now!
 ├── const [currentBeat, setCurrentBeat] = useState(0)
 ├── const [beatChords, setBeatChords] = useState({})
+├── const [beatVelocities, setBeatVelocities] = useState({})  // NEW!
 └── const [selectedBeat, setSelectedBeat] = useState(null)
 
 Props Passed Down to ChordProgression.jsx:
   - bpm, setBpm                    → Used in ControlPanel
   - isPlaying                      → Controls play button state
-  - measures                       → Determines timeline length
+  - measures                       → Array of beats per measure
   - currentBeat                    → Highlights active beat
   - beatChords                     → Displays chords in beats
+  - beatVelocities (NEW!)          → Displays per-beat tempo
   - selectedBeat                   → Opens chord selector
   - togglePlay, stopPlay, etc.     → Event handlers
+  - addMeasure                     → Add measure at end
+  - insertMeasure (NEW!)           → Insert measure after index
+  - deleteMeasure (NEW!)           → Delete measure at index
   - handleBeatClick                → Opens chord selector
   - handleChordSelect              → Updates beatChords
+  - handleVelocitySelect (NEW!)    → Updates beatVelocities
   - setSelectedBeat                → Closes chord selector
 
 Props Flow Pattern:
@@ -495,14 +819,21 @@ App.jsx → ChordProgression.jsx → Component
 ├─→ ControlPanel.jsx
 │   ├─ isPlaying (read-only)
 │   ├─ bpm (read-only)
-│   ├─ measures (read-only)
-│   └─ onPlay, onStop, onBpmChange (callbacks)
+│   ├─ measures.length (read-only, for display)
+│   ├─ beatsPerMeasure (from ChordProgression state)
+│   ├─ setBeatsPerMeasure (callback)
+│   └─ onPlay, onStop, onBpmChange, onAddMeasure (callbacks)
 │
 ├─→ Timeline.jsx → Measure.jsx → Beat.jsx
-│   ├─ measures (read-only, determines count)
+│   ├─ measures (array, determines count and beats per measure)
 │   ├─ currentBeat (read-only, for highlighting)
 │   ├─ beatChords (read-only, for display)
-│   └─ onClick → handleBeatClick (callback)
+│   ├─ beatVelocities (NEW! read-only, for tempo display)
+│   ├─ beatsPerMeasure (renamed beatsToInsert internally)
+│   ├─ onBeatClick → handleBeatClick (callback)
+│   ├─ onVelocitySelect → handleVelocitySelect (NEW! callback)
+│   ├─ onInsertMeasure → insertMeasure (NEW! callback)
+│   └─ onDeleteMeasure → deleteMeasure (NEW! callback)
 │
 ├─→ StatusDisplay.jsx
 │   ├─ currentBeat (read-only)
@@ -511,7 +842,10 @@ App.jsx → ChordProgression.jsx → Component
 └─→ ChordSelector.jsx
     ├─ open (computed: selectedBeat !== null)
     ├─ currentChord (read from beatChords[selectedBeat])
+    ├─ beatBpm (NEW! read from beatVelocities[selectedBeat])
+    ├─ defaultBpm (NEW! global BPM for reference)
     ├─ onSelect → handleChordSelect (callback)
+    ├─ onBeatBpmChange → handleBeatBpmChange (NEW! callback)
     └─ onClose → setSelectedBeat(null) (callback)
 
 Key Principle: "Lift State Up"
@@ -602,9 +936,16 @@ Why use functional updates?
     // Start interval timer
     intervalRef.current = setInterval(() => {
       setCurrentBeat((prev) => {
-        // Calculate next beat (wraps around)
-        const nextBeat = (prev + 1) % (measures * 4);
+        // Calculate next beat (wraps around at total beats)
+        const totalBeats = measures.reduce((sum, beats) => sum + beats, 0);
+        const nextBeat = (prev + 1) % totalBeats;
         const chords = beatChords[nextBeat];
+
+        // Check if next beat has custom velocity and update BPM (NEW!)
+        const nextBeatVelocity = beatVelocities[nextBeat];
+        if (nextBeatVelocity !== undefined) {
+          setBpm(nextBeatVelocity);
+        }
 
         // Play first half chord immediately
         if (chords?.first) {
@@ -620,7 +961,7 @@ Why use functional updates?
 
         return nextBeat;  // Update state
       });
-    }, beatInterval);  // Repeat every beat
+    }, beatInterval);  // Repeat every beat (interval adjusts with BPM changes)
   } else {
     // Cleanup when stopped
     if (intervalRef.current) {
@@ -636,14 +977,15 @@ Why use functional updates?
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (halfBeatTimeoutRef.current) clearTimeout(halfBeatTimeoutRef.current);
   };
-}, [isPlaying, bpm, measures, beatInterval, halfBeatInterval, beatChords, playChord]);
+}, [isPlaying, bpm, measures, beatInterval, halfBeatInterval, beatChords, beatVelocities, playChord]);
 
 // Key Concepts:
 // 1. Effect runs when isPlaying changes (play/stop trigger)
 // 2. setInterval creates repeating timer for beats
 // 3. useRef stores interval ID (persists across renders)
 // 4. Cleanup function prevents memory leaks
-// 5. Dependencies array re-syncs when BPM/measures change`}
+// 5. Dependencies array re-syncs when BPM/measures/beatVelocities change
+// 6. Dynamic BPM: Checks beatVelocities before each beat (NEW!)`}
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -665,9 +1007,10 @@ Why use functional updates?
    - Prevents multiple timers running simultaneously
 
 ✅ Reactive to Dependencies
-   - When BPM changes: old effect cleans up, new one starts with new timing
-   - When measures change: recalculates beat wrap-around
+   - When global BPM changes: old effect cleans up, new one starts with new timing
+   - When measures array changes: recalculates total beats and wrap-around
    - When beatChords change: next beat plays new chords
+   - When beatVelocities change: applies new custom tempos (NEW!)
 
 Timing Flow:
 ┌─────────────────────────────────────────────────────────┐
@@ -704,14 +1047,16 @@ const beatInterval = (60 / bpm) * 1000;
 const halfBeatInterval = beatInterval / 2;
 // Example: 120 BPM → 250ms per half beat
 
-// Beat index calculation
-const beatIndex = measureIndex * 4 + beatInMeasure;
-// Measure 0, Beat 2 → 0 * 4 + 2 = Beat 2
-// Measure 1, Beat 3 → 1 * 4 + 3 = Beat 7
+// Beat index calculation (variable beats per measure)
+const beatIndex = measures.slice(0, measureIndex).reduce((sum, b) => sum + b, 0) + beatInMeasure;
+// measures = [4, 4, 3, 5]
+// Measure 0, Beat 2 → 0 + 2 = Beat 2
+// Measure 2, Beat 1 → (4+4) + 1 = Beat 9
 
 // Wrap around after last beat
-const nextBeat = (currentBeat + 1) % (measures * 4);
-// 4 measures → wraps at beat 16 (back to 0)
+const totalBeats = measures.reduce((sum, beats) => sum + beats, 0);
+const nextBeat = (currentBeat + 1) % totalBeats;
+// measures = [4, 4, 3, 5] → totalBeats = 16
 // Beat 15 → (15 + 1) % 16 = 0`}
         </Box>
       </Paper>
