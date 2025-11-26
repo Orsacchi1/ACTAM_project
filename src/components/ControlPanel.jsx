@@ -11,6 +11,8 @@ function ControlPanel({
   onRefresh,
   onBpmChange,
   onAddMeasure,
+  beatsPerMeasure,
+  setBeatsPerMeasure,
 }) {
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -68,7 +70,20 @@ function ControlPanel({
           sx={{ width: 100 }}
         />
 
-        <Button variant="outlined" onClick={onAddMeasure} startIcon={<Add />}>
+        <TextField
+          label="Beats"
+          type="number"
+          value={beatsPerMeasure}
+          onChange={(e) => setBeatsPerMeasure(Number(e.target.value))}
+          inputProps={{ min: 1, max: 15 }}
+          sx={{ width: 100 }}
+        />
+
+        <Button
+          variant="outlined"
+          onClick={() => onAddMeasure(beatsPerMeasure)}
+          startIcon={<Add />}
+        >
           Add Measure
         </Button>
 

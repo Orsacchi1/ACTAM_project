@@ -62,7 +62,7 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
           <Box
             sx={{
               width: 2,
-              height: beatInMeasure === 0 ? 50 : 40,
+              height: beatInMeasure === 0 ? 60 : 50,
               backgroundColor: beatInMeasure === 0 ? "#333" : "#666",
               transition: "all 0.1s ease",
             }}
@@ -87,7 +87,7 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
           <Box
             sx={{
               width: 2,
-              height: 28,
+              height: 38,
               backgroundColor: "#999",
               transition: "all 0.1s ease",
             }}
@@ -95,38 +95,48 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
         </Box>
       </Box>
 
-      {/* Beat number layer - below ticks */}
+      {/* Beat number and velocity layer - below ticks */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: "row",
-          height: 18,
+          flexDirection: "column",
+          gap: 0.5,
         }}
       >
-        {/* Number aligned with first half tick */}
+        {/* Beat number row */}
         <Box
           sx={{
-            flex: 1,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            flexDirection: "row",
+            height: 22,
+            minHeight: 22,
           }}
         >
-          <Typography
-            variant="caption"
+          {/* Number aligned with first half tick */}
+          <Box
             sx={{
-              fontWeight: isActive ? "bold" : "normal",
-              fontSize: isActive ? "1rem" : "0.75rem",
-              color: isActive ? "primary.main" : "text.secondary",
-              transition: "all 0.1s ease",
-              lineHeight: 1,
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {beatInMeasure + 1}
-          </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: isActive ? "bold" : "normal",
+                fontSize: isActive ? "1rem" : "0.75rem",
+                color: isActive ? "primary.main" : "text.secondary",
+                transition: "all 0.1s ease",
+                lineHeight: 1,
+              }}
+            >
+              {beatInMeasure + 1}
+            </Typography>
+          </Box>
+          {/* Empty space for second half */}
+          <Box sx={{ flex: 1 }} />
         </Box>
-        {/* Empty space for second half */}
-        <Box sx={{ flex: 1 }} />
       </Box>
     </Box>
   );
