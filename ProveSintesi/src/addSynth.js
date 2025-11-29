@@ -11,6 +11,7 @@ const MIN_FREQ = 40;
 const MAX_FREQ = 22050;
 const GEN = new MersenneTwister();
 const C = new AudioContext();
+Tone.setContext(C); //Forces tone.js to use my context in order to make the two node types able to communicate
 const GAIN_IN = C.createGain();
 const GAIN_OUT = C.createGain();
 const HI_PASS = C.createBiquadFilter(); //Crea un filtro e lo imposta come passa alto
@@ -19,6 +20,9 @@ const LO_PASS = C.createBiquadFilter(); //Crea un filtro e lo imposta come passa
 LO_PASS.type = "lowpass";
 const OSC = C.createOscillator();
 const ENV = C.createGain();
+const REV = new Tone.Reverb({decay: 3}); //Assign the decay here in order to calculate the buffer and start the sound in real time
+let wetGain = 0.0;
+let wetGainReverb = 0.0;
 let lastI = 0; //LAST INDEX INSERTED, USED FOR HARMONIC SPACING
 let dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
 let envType = 1; //Choose the type of envelope [0=Normal, 1=Pluck, 2=Pad]
@@ -129,23 +133,29 @@ function normalize(bands) {
     return bands;
 }
 
-function createDelay(){
+function createDelay(val=0.0){
     const DELAY = C.createDelay();
     DELAY.delayTime.value = 0.2; //200 ms
     const FEEDBACK = C.createGain();
-    FEEDBACK.gain.value = 0.8; //# repeats
+    FEEDBACK.gain.value = 0.6; //# repeats
     const WET = C.createGain();
-    WET.gain.value = 0.5;
+    WET.gain.value = val;
     const DRY = C.createGain();
     DRY.gain.value = 1.0;
     //Create a closed loop
     DELAY.connect(FEEDBACK);
     FEEDBACK.connect(DELAY);
     GAIN_IN.connect(DELAY);
-    //GAIN_IN.connect(DRY);
+    GAIN_IN.connect(DRY);
     DELAY.connect(WET);
-    WET.connect(GAIN_OUT);
+    //WET.connect(REV);
+    Tone.connect(WET, REV)
     //DRY.connect(GAIN_OUT);
+    Tone.connect(DRY, REV)
+}
+
+function createReverb(val=0.0){
+    REV.wet.value = val;
 }
 
 function chooseEnv(value){
@@ -158,8 +168,8 @@ function chooseEnv(value){
         rel = 0.0;
     }else if(envType==1){
         atk = 0.05;
-        dec = 0.5;
-        sus = 0.05;
+        dec = 0.15;
+        sus = 0.2;
         rel = 2.0;
     }else{
         atk = 3.0;
@@ -202,7 +212,10 @@ function readStuffValues(){
         randFilt=0;
         cluster=0;
     }
+    envType = document.querySelector('input[name="group3"]:checked').value;
     sparse = document.getElementById('sparse').checked ? document.getElementById('sparse').value : 0;
+    wetGain = document.getElementById('delay').checked ? document.getElementById('delay').value : 0;
+    wetGainReverb = document.getElementById('reverb').checked ? document.getElementById('reverb').value : 0;
 }
 
 function setHiPass(value){
@@ -240,10 +253,15 @@ function createEnvelope(a, d, s, r){
 function startSound(freq=110){
     let periodicWave = createRichSoundSpectra();
     OSC.setPeriodicWave(periodicWave);
-    OSC.connect(LO_PASS).connect(HI_PASS).connect(ENV).connect(GAIN_IN).connect(GAIN_OUT).connect(C.destination);
+    OSC.connect(LO_PASS).connect(HI_PASS).connect(ENV).connect(GAIN_IN);
+    //Tone.connect(GAIN_IN, REV);
+    Tone.connect(REV, GAIN_OUT);
+    GAIN_OUT.connect(C.destination);
+    
     initFilters();
     initGains();
-    createDelay();
+    createDelay(wetGain);
+    createReverb(wetGainReverb);
     OSC.frequency.value = freq;
     chooseEnv(envType);
     OSC.start();
