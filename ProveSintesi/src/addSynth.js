@@ -1,5 +1,6 @@
 //IMPORT PACKAGES
-
+//RUN npm install tone
+import * as Tone from "tone" 
 import MersenneTwister from "mersenne-twister";  //For random generation
 
 //GLOBAL VARIABLES
@@ -17,8 +18,10 @@ HI_PASS.type = "highpass";
 const LO_PASS = C.createBiquadFilter(); //Crea un filtro e lo imposta come passa alto
 LO_PASS.type = "lowpass";
 const OSC = C.createOscillator();
+const ENV = C.createGain();
 let lastI = 0; //LAST INDEX INSERTED, USED FOR HARMONIC SPACING
 let dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
+let envType = 1; //Choose the type of envelope [0=Normal, 1=Pluck, 2=Pad]
 const K=0.3; //DAMP factor for the exponential one
 let sparse=1; //Flag for the spacing or not
 let randFilt=0; //Has priority on cluster
@@ -126,21 +129,47 @@ function normalize(bands) {
     return bands;
 }
 
-function setHiPass(value){
-    HI_PASS.frequency.setValueAtTime(value, C.currentTime);
+function createDelay(){
+    const DELAY = C.createDelay();
+    DELAY.delayTime.value = 0.2; //200 ms
+    const FEEDBACK = C.createGain();
+    FEEDBACK.gain.value = 0.8; //# repeats
+    const WET = C.createGain();
+    WET.gain.value = 0.5;
+    const DRY = C.createGain();
+    DRY.gain.value = 1.0;
+    //Create a closed loop
+    DELAY.connect(FEEDBACK);
+    FEEDBACK.connect(DELAY);
+    GAIN_IN.connect(DELAY);
+    //GAIN_IN.connect(DRY);
+    DELAY.connect(WET);
+    WET.connect(GAIN_OUT);
+    //DRY.connect(GAIN_OUT);
 }
 
-function setLoPass(value){
-    LO_PASS.frequency.setValueAtTime(value, C.currentTime);
+function chooseEnv(value){
+    let atk, dec, sus, rel;
+    envType = value;
+    if(envType==0){
+        atk = 0.1;
+        dec = 0.0;
+        sus = 1.0;
+        rel = 0.0;
+    }else if(envType==1){
+        atk = 0.05;
+        dec = 0.5;
+        sus = 0.05;
+        rel = 2.0;
+    }else{
+        atk = 3.0;
+        dec = 1.0;
+        sus = 0.8;
+        rel = 5.0;
+    }
+    createEnvelope(atk, dec, sus, rel);
 }
 
-function setGainIn(value){
-    GAIN_IN.gain.value = value;
-}
-
-function setGainOut(value){
-    GAIN_OUT.gain.value = value;
-}
 //UTILITY FUNCTIONS
 function initFilters(){
     LO_PASS.frequency.value = 22050; //Filtered frequency
@@ -176,13 +205,47 @@ function readStuffValues(){
     sparse = document.getElementById('sparse').checked ? document.getElementById('sparse').value : 0;
 }
 
+function setHiPass(value){
+    HI_PASS.frequency.setValueAtTime(value, C.currentTime);
+}
+
+function setLoPass(value){
+    LO_PASS.frequency.setValueAtTime(value, C.currentTime);
+}
+
+function setGainIn(value){
+    GAIN_IN.gain.value = value;
+}
+
+function setGainOut(value){
+    GAIN_OUT.gain.value = value;
+}
+
+function createEnvelope(a, d, s, r){
+    let now = C.currentTime;
+    
+    // ATTACK
+    ENV.gain.setValueAtTime(0, now);
+    ENV.gain.linearRampToValueAtTime(1, now + a);
+
+    // DECAY → SUSTAIN
+    ENV.gain.linearRampToValueAtTime(s, now + a + d);
+
+    // RILASCIO (release)
+    //ENV.gain.setValueAtTime(s, now + 1);
+    //ENV.gain.linearRampToValueAtTime(0, now + 1 + r);
+}
+
 //LINKING AND ROUTING
 function startSound(freq=110){
     let periodicWave = createRichSoundSpectra();
     OSC.setPeriodicWave(periodicWave);
-    OSC.connect(LO_PASS).connect(HI_PASS).connect(GAIN_IN).connect(GAIN_OUT).connect(C.destination);
+    OSC.connect(LO_PASS).connect(HI_PASS).connect(ENV).connect(GAIN_IN).connect(GAIN_OUT).connect(C.destination);
     initFilters();
+    initGains();
+    createDelay();
     OSC.frequency.value = freq;
+    chooseEnv(envType);
     OSC.start();
 }
 
