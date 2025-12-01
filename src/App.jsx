@@ -578,7 +578,8 @@ function App() {
   };
 
   const handlePageChange = (pageId) => {
-    // Pause playback when switching pages
+    // Stop sound and pause playback when switching pages
+    engineInterface.stopSound();
     if (isPlaying) {
       setIsPlaying(false);
     }
