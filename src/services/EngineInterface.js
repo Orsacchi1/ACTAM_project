@@ -111,4 +111,11 @@ export default class EngineInterface {
     // TODO: Implementation for stopping all sounds
     console.log("Stopping all sounds");
   }
+
+  playTestNote() {
+    console.log("Playing test note");
+    // This function is used to play a demo melody when click the LISTEN button in Sound Design page
+    // TODO: Implementation for playing a test note with current settings
+  }
+
 }

@@ -273,6 +273,12 @@ function SoundDesign({ soundEngine = null }) {
     // TODO: Implement load functionality
   };
 
+  const handleListen = () => {
+    console.log("Listen to current sound");
+    // Example: Play a test note with current settings
+    soundEngine.playTestNote();
+  };
+
   const handleGenerate = () => {
     // Generate random harmonics
     const newHarmonics = soundEngine.setPartitions();
@@ -551,6 +557,7 @@ function SoundDesign({ soundEngine = null }) {
                 >
                   LOAD
                 </Button>
+
                 <Button
                   variant="contained"
                   onClick={handleGenerate}
@@ -558,6 +565,15 @@ function SoundDesign({ soundEngine = null }) {
                   size="large"
                 >
                   GENERATE
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleListen}
+                  fullWidth
+                  size="large"
+                >
+                  LISTEN
                 </Button>
               </Box>
             </Paper>
