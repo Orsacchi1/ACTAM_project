@@ -9,6 +9,9 @@ export default class EngineInterface {
 
     // this.envelope_attack property was an example to show how to use the class
     this.envelope_attack = 0.01;
+    this.harmonics = [
+      1.0, 0.5, 0.3, 0.2, 0.15, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02,
+    ];
   }
 
   setEnvelopeAttack(attack) {
@@ -49,6 +52,8 @@ export default class EngineInterface {
     console.log(`Setting filters resonance frequency to: ${freq}`);
   }
 
+  // TODO: There should be more methods here to set other parameters.
+
   setPartitions() {
     /*
       This method randomly sets the ratios of the first 12 harmonics (including the fundamental frequency) of the timbre,
@@ -57,13 +62,53 @@ export default class EngineInterface {
 
     const harmonics = [];
     for (let i = 0; i < 12; i++) {
-      const ratio = this.generator.random();
+      const ratio = Math.round(this.generator.random() * 100) / 100;
       harmonics.push(ratio);
     }
+    this.harmonics = harmonics;
 
     // TODO: Implementation for applying harmonic ratios to the sound engine
 
     console.log("Harmonic ratios set to:", harmonics);
     return harmonics;
+  }
+
+  getHarmonics() {
+    return this.harmonics;
+  }
+
+  playNoteWithDuration(frequency, duration) {
+    // duration is in milliseconds
+    // TODO: Implementation for playing a note at the given frequency
+
+    console.log(
+      `Playing note at frequency: ${frequency} Hz for duration: ${duration} seconds`
+    );
+  }
+
+  playChordWithDuration(frequencies, duration) {
+    // duration is in milliseconds
+    //chord is an array of frequencies
+
+    // TODO: Implementation for playing a chord with the given frequencies
+    console.log(
+      `Playing chord at frequencies: ${frequencies} Hz for duration: ${duration} seconds`
+    );
+  }
+
+  playNote(frequency) {
+    // TODO: Implementation for playing a note at the given frequency
+    console.log(`Playing note at frequency: ${frequency} Hz`);
+  }
+
+  releaseNote() {
+    // if there is an active note, release it
+    // TODO: Implementation for releasing a note
+    console.log("Releasing note");
+  }
+
+  stopSound() {
+    // TODO: Implementation for stopping all sounds
+    console.log("Stopping all sounds");
   }
 }
