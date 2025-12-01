@@ -102,7 +102,7 @@ const KNOB_CONFIG = [
     knobs: [
       {
         id: "l3a",
-        label: "TBD.",
+        label: "Decay",
         min: 0,
         max: 1,
         step: 0.01,
@@ -110,7 +110,7 @@ const KNOB_CONFIG = [
       },
       {
         id: "l3b",
-        label: "TBD.",
+        label: "Amount",
         min: 0,
         max: 1,
         step: 0.01,
@@ -228,12 +228,12 @@ function SoundDesign({ soundEngine = null }) {
 
   const handleL3aChange = (value) => {
     setL3a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setReverbDecay(value);
   };
 
   const handleL3bChange = (value) => {
     setL3b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setReverbAmount(value);
   };
 
   const handleL3cChange = (value) => {

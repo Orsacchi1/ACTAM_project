@@ -54,6 +54,16 @@ export default class EngineInterface {
 
   // TODO: There should be more methods here to set other parameters.
 
+  setReverbDecay(time) {
+    // TODO: Implementation for setting reverb decay time
+    console.log(`Setting reverb decay time to: ${time}`);
+  }
+
+  setReverbAmount(amount) {
+    // TODO: Implementation for setting reverb amount
+    console.log(`Setting reverb amount to: ${amount}`);
+  }
+
   setPartitions() {
     /*
       This method randomly sets the ratios of the first 12 harmonics (including the fundamental frequency) of the timbre,
