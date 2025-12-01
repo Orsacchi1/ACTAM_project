@@ -15,8 +15,11 @@ import SoundDesign from "./pages/SoundDesign";
 import Test from "./pages/Test";
 import { audioEngine } from "./utils/audioEngine";
 import "./App.css";
+import EngineInterface from "./services/EngineInterface";
 
 function App() {
+  const engineInterface = useRef(new EngineInterface()).current;
+
   // ========== Navigation State ==========
   const [currentPage, setCurrentPage] = useState("chordProgression");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -498,12 +501,15 @@ function App() {
           handleBeatClick={handleBeatClick}
           handleChordSelect={handleChordSelect}
           setSelectedBeat={setSelectedBeat}
+          soundEngine={engineInterface}
         />
       )}
 
-      {currentPage === "soundDesign" && <SoundDesign />}
+      {currentPage === "soundDesign" && (
+        <SoundDesign soundEngine={engineInterface} />
+      )}
 
-      {currentPage === "test" && <Test />}
+      {currentPage === "test" && <Test soundEngine={engineInterface} />}
     </>
   );
 }
