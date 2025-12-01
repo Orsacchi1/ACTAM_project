@@ -198,19 +198,17 @@ function SoundDesign({ soundEngine = null }) {
   // to ensure you're using the latest value, as React state updates are asynchronous
   const handleL1aChange = (value) => {
     setL1a(value);
-    console.log("L1a changed to", value);
-    // TODO: Add audio engine update logic here using 'value' parameter
-    // Example: audioEngine.setHiCutFrequency(value);
+    soundEngine.setFiltersHiCut(value);
   };
 
   const handleL1bChange = (value) => {
     setL1b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setFiltersLoCut(value);
   };
 
   const handleL1cChange = (value) => {
     setL1c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setFiltersRes(value);
   };
 
   const handleL2aChange = (value) => {
@@ -245,22 +243,22 @@ function SoundDesign({ soundEngine = null }) {
 
   const handleR1aChange = (value) => {
     setR1a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeAttack(value);
   };
 
   const handleR1bChange = (value) => {
     setR1b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeDecay(value);
   };
 
   const handleR1cChange = (value) => {
     setR1c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeSustain(value);
   };
 
   const handleR1dChange = (value) => {
     setR1d(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeRelease(value);
   };
 
   const handleSave = () => {
