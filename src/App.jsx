@@ -278,7 +278,7 @@ function App() {
   const togglePlay = () => {
     // AUDIO ENGINE: Initialize audio context
     // Note: Must be called after user interaction (browser requirement)
-    audioEngine.init();
+
 
     // Apply current beat's custom velocity if set
     const currentBeatVelocity = beatVelocities[currentBeat];
@@ -355,7 +355,7 @@ function App() {
     setMeasures([4, 4, 4, 4]);
     setBpm(120);
     setBeatChords({});
-    // Note: beatVelocities not cleared - add if needed
+    setBeatVelocities({});
   };
 
   /**
