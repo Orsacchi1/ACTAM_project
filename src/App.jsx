@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Drawer,
   List,
@@ -14,11 +14,13 @@ import ChordProgression from "./pages/ChordProgression";
 import SoundDesign from "./pages/SoundDesign";
 import Test from "./pages/Test";
 import { audioEngine } from "./utils/audioEngine";
+import translate from "./utils/translator";
 import "./App.css";
 import EngineInterface from "./services/EngineInterface";
 
 function App() {
-  const engineInterface = useRef(new EngineInterface()).current;
+  // Use useMemo to create a single instance that persists across renders
+  const engineInterface = useMemo(() => new EngineInterface(), []);
 
   // ========== Navigation State ==========
   const [currentPage, setCurrentPage] = useState("chordProgression");
@@ -52,6 +54,7 @@ function App() {
   // Refs for playback intervals
   const intervalRef = useRef(null); // Main beat interval
   const halfBeatTimeoutRef = useRef(null); // Second half beat timeout
+  const playChordRef = useRef(null); // Ref to hold playChord function
 
   // ========== Calculated Values ==========
   // Calculate total beats across all measures
@@ -63,44 +66,140 @@ function App() {
   const halfBeatInterval = beatInterval / 2;
 
   // ========== Helper Functions ==========
-  /**
-   * Extract root note from chord name
-   * Example: "Cmaj7" -> "C", "F#m" -> "F#"
-   */
-  const extractRootNote = (chordName) => {
-    if (!chordName) return null;
-    if (chordName.length >= 2 && chordName[1] === "#") {
-      return chordName.substring(0, 2); // C#, D#, etc.
-    }
-    return chordName[0]; // C, D, E, etc.
-  };
 
   /**
-   * Play chord using audioEngine
+   * Calculate the duration a chord should play until the next chord
+   * Takes into account tempo changes (beatVelocities) between the current and next chord
    *
-   * TODO: This currently only plays the root note of the chord.
-   * Future improvements needed:
-   * 1. Play full chord (root + 3rd + 5th + extensions)
-   * 2. Implement different voicings based on chord type
-   * 3. Add velocity/volume control
-   * 4. Support chord inversions
-   * 5. Add ADSR envelope shaping
+   * @param {number} beatIndex - The beat index where the chord starts
+   * @param {string} half - "first" or "second" half of the beat
+   * @returns {number} Duration in milliseconds
+   *
+   * Example:
+   * - Chord at beat 0, first half, next chord at beat 2, first half
+   * - If beat 0 is 120 BPM, beat 1 is 60 BPM
+   * - Duration = (0.5 beat at 120 BPM) + (1 beat at 60 BPM) + (0.5 beat at 60 BPM)
+   */
+  const calculateChordDuration = useCallback(
+    (beatIndex, half) => {
+      // Find the next chord position
+      let nextBeatIndex = beatIndex;
+      let nextHalf = half;
+      let found = false;
+
+      // Helper to get BPM for a specific beat (use beatVelocities or fallback to global bpm)
+      const getBpmForBeat = (beat) => {
+        return beatVelocities[beat] !== undefined ? beatVelocities[beat] : bpm;
+      };
+
+      // Helper to calculate time for a half beat at a given BPM (in milliseconds)
+      const halfBeatTime = (beatBpm) => (60 / beatBpm / 2) * 1000;
+
+      // Start searching from current position
+      // If we're at "first", check "second" of same beat first
+      if (half === "first") {
+        if (beatChords[beatIndex]?.second) {
+          // Next chord is in the second half of the same beat
+          return halfBeatTime(getBpmForBeat(beatIndex));
+        }
+        nextHalf = "second";
+      }
+
+      // Search through subsequent beats
+      for (
+        let i = beatIndex + (half === "first" ? 0 : 1);
+        i < totalBeats && !found;
+        i++
+      ) {
+        // Check first half of this beat (skip if same beat and we started at first)
+        if (i > beatIndex || half === "second") {
+          if (beatChords[i]?.first) {
+            nextBeatIndex = i;
+            nextHalf = "first";
+            found = true;
+            break;
+          }
+        }
+
+        // Check second half of this beat
+        if (beatChords[i]?.second) {
+          nextBeatIndex = i;
+          nextHalf = "second";
+          found = true;
+          break;
+        }
+      }
+
+      // If no next chord found, play until end of all measures
+      if (!found) {
+        nextBeatIndex = totalBeats;
+        nextHalf = "first";
+      }
+
+      // Calculate total duration
+      let duration = 0;
+
+      // Current position
+      let currentBeatIdx = beatIndex;
+      let currentHalf = half;
+
+      while (
+        currentBeatIdx < nextBeatIndex ||
+        (currentBeatIdx === nextBeatIndex && currentHalf !== nextHalf)
+      ) {
+        const currentBpm = getBpmForBeat(currentBeatIdx);
+        const halfTime = halfBeatTime(currentBpm);
+
+        if (currentHalf === "first") {
+          duration += halfTime;
+          currentHalf = "second";
+        } else {
+          duration += halfTime;
+          currentBeatIdx++;
+          currentHalf = "first";
+        }
+
+        // Safety check to prevent infinite loop
+        if (currentBeatIdx > totalBeats) break;
+      }
+
+      return duration;
+    },
+    [beatChords, beatVelocities, bpm, totalBeats]
+  );
+
+  /**
+   * Play chord using engineInterface
+   *
+   * Uses translator to convert chord name to frequencies
+   * and calculateChordDuration to determine how long to play
    *
    * @param {string} chordName - Chord name (e.g., "Cmaj7", "Dm", "G7")
+   * @param {number} beatIndex - The beat index where the chord is played
+   * @param {string} half - "first" or "second" half of the beat
    */
   const playChord = useCallback(
-    (chordName) => {
+    (chordName, beatIndex, half) => {
       if (chordName) {
-        const rootNote = extractRootNote(chordName);
-        if (rootNote) {
-          // AUDIO ENGINE: Play chord root note
-          // TODO: Replace with full chord playback
-          audioEngine.playChordRoot(rootNote, bpm);
+        // Convert chord name to frequencies array
+        const frequencies = translate(chordName);
+
+        if (frequencies && frequencies.length > 0) {
+          // Calculate how long this chord should play (in milliseconds)
+          const duration = calculateChordDuration(beatIndex, half);
+
+          // Play the chord using engineInterface
+          engineInterface.playChordWithDuration(frequencies, duration);
         }
       }
     },
-    [bpm]
+    [calculateChordDuration, engineInterface]
   );
+
+  // Keep playChordRef updated with latest playChord function
+  useEffect(() => {
+    playChordRef.current = playChord;
+  }, [playChord]);
 
   /**
    * Main playback loop
@@ -129,14 +228,14 @@ function App() {
 
           // AUDIO ENGINE: Play first half chord immediately
           if (chords?.first) {
-            playChord(chords.first);
+            playChordRef.current?.(chords.first, nextBeat, "first");
           }
 
           // AUDIO ENGINE: Schedule second half chord
           // Plays at the midpoint of the beat
           if (chords?.second) {
             halfBeatTimeoutRef.current = setTimeout(() => {
-              playChord(chords.second);
+              playChordRef.current?.(chords.second, nextBeat, "second");
             }, halfBeatInterval);
           }
 
@@ -168,7 +267,6 @@ function App() {
     halfBeatInterval,
     beatChords,
     beatVelocities,
-    playChord,
   ]);
 
   /**
@@ -188,6 +286,20 @@ function App() {
       setBpm(currentBeatVelocity);
     }
 
+    // Play the current beat's chords immediately when starting
+    const chords = beatChords[currentBeat];
+    if (chords?.first) {
+      playChordRef.current?.(chords.first, currentBeat, "first");
+    }
+    if (chords?.second) {
+      // Schedule second half chord
+      const currentHalfBeatInterval =
+        (60 / (currentBeatVelocity || bpm) / 2) * 1000;
+      setTimeout(() => {
+        playChordRef.current?.(chords.second, currentBeat, "second");
+      }, currentHalfBeatInterval);
+    }
+
     setIsPlaying(true);
   };
 
@@ -195,6 +307,8 @@ function App() {
    * Pause playback (maintains current beat position)
    */
   const stopPlay = () => {
+    // Stop any currently playing sound
+    engineInterface.stopSound();
     setIsPlaying(false);
   };
 
@@ -203,12 +317,29 @@ function App() {
    * Applies first beat's custom tempo if set
    */
   const replayFromStart = () => {
+    // Stop any currently playing sound before restarting
+    engineInterface.stopSound();
+
     setCurrentBeat(0);
 
     // Apply first beat's custom velocity if set
     const firstBeatVelocity = beatVelocities[0];
     if (firstBeatVelocity !== undefined) {
       setBpm(firstBeatVelocity);
+    }
+
+    // Play beat 0's chords immediately when restarting
+    const chords = beatChords[0];
+    if (chords?.first) {
+      playChordRef.current?.(chords.first, 0, "first");
+    }
+    if (chords?.second) {
+      // Schedule second half chord
+      const currentHalfBeatInterval =
+        (60 / (firstBeatVelocity || bpm) / 2) * 1000;
+      setTimeout(() => {
+        playChordRef.current?.(chords.second, 0, "second");
+      }, currentHalfBeatInterval);
     }
 
     setIsPlaying(true);
