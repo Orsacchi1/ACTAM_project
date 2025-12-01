@@ -1,7 +1,7 @@
 import * as Tone from "tone";
 import MersenneTwister from "mersenne-twister";
 
-class EngineInterface {
+export default class EngineInterface {
   constructor() {
     this.audioCon = new AudioContext();
     this.generator = new MersenneTwister();
