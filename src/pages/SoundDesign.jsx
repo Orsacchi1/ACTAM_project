@@ -2,6 +2,7 @@ import { Container, Typography, Box, Paper, Button } from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
 import BarChart from "../components/BarChart";
+import EngineInterface from "../services/EngineInterface";
 
 /**
  * SOUND DESIGN PAGE - Configuration & Usage Guide
@@ -165,7 +166,7 @@ const KNOB_CONFIG = [
   },
 ];
 
-function SoundDesign(soundEngine = null) {
+function SoundDesign({ soundEngine = null }) {
   // Left Column (L), Row 1, Knobs A/B/C - Hi Cut Filter
   const [l1a, setL1a] = useState(KNOB_CONFIG[0].knobs[0].default);
   const [l1b, setL1b] = useState(KNOB_CONFIG[0].knobs[1].default);
@@ -273,9 +274,8 @@ function SoundDesign(soundEngine = null) {
   };
 
   const handleGenerate = () => {
-    console.log("Generate random sound");
     // Generate random harmonics
-    const newHarmonics = Array.from({ length: 12 }, () => Math.random());
+    const newHarmonics = soundEngine.setPartitions();
     setHarmonics(newHarmonics);
   };
 
