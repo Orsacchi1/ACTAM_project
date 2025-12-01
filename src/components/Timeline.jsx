@@ -11,6 +11,7 @@ function Timeline({
   onInsertMeasure,
   onDeleteMeasure,
   beatsPerMeasure: beatsToInsert,
+  isPlaying = false,
 }) {
   // Calculate start beat for each measure
   const getStartBeat = (measureIndex) => {
@@ -59,6 +60,7 @@ function Timeline({
                       beatsPerMeasure={currentMeasureBeats}
                       beatsToInsert={beatsToInsert}
                       startBeat={startBeat}
+                      isPlaying={isPlaying}
                     />
                   );
                 })}

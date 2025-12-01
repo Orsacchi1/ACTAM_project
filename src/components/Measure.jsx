@@ -14,6 +14,7 @@ function Measure({
   beatsPerMeasure = 4,
   beatsToInsert = 4,
   startBeat = 0,
+  isPlaying = false,
 }) {
   const beats = Array.from({ length: beatsPerMeasure }, (_, i) => i);
 
@@ -57,14 +58,16 @@ function Measure({
         <IconButton
           size="small"
           onClick={() => onDeleteMeasure(measureIndex)}
+          disabled={isPlaying}
           sx={{
             padding: 0,
             width: 16,
             height: 16,
             color: "error.main",
+            opacity: isPlaying ? 0.4 : 1,
             "&:hover": {
-              backgroundColor: "error.light",
-              color: "error.dark",
+              backgroundColor: isPlaying ? "transparent" : "error.light",
+              color: isPlaying ? "error.main" : "error.dark",
             },
           }}
         >
@@ -76,6 +79,7 @@ function Measure({
       <IconButton
         size="small"
         onClick={handleInsert}
+        disabled={isPlaying}
         sx={{
           position: "absolute",
           top: -20,
@@ -87,9 +91,10 @@ function Measure({
           backgroundColor: "background.paper",
           border: "1px solid",
           borderColor: "success.main",
+          opacity: isPlaying ? 0.4 : 1,
           "&:hover": {
-            backgroundColor: "success.light",
-            color: "success.dark",
+            backgroundColor: isPlaying ? "background.paper" : "success.light",
+            color: isPlaying ? "success.main" : "success.dark",
           },
         }}
       >
@@ -240,6 +245,7 @@ function Measure({
               currentBeat={currentBeat}
               onClick={onBeatClick}
               chords={chords}
+              isPlaying={isPlaying}
             />
           );
         })}
