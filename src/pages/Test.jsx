@@ -3,7 +3,7 @@ import { useState } from "react";
 import Knob from "../components/Knob";
 import BarChart from "../components/BarChart";
 
-function Test(soundEngine = null) {
+function Test({soundEngine = null}) {
   const [volume, setVolume] = useState(50);
   const [frequency, setFrequency] = useState(440);
   const [resonance, setResonance] = useState(0.5);
