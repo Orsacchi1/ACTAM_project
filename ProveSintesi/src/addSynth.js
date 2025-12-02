@@ -1,6 +1,11 @@
+//-----!!!IMPORTANT!!!-------
+//This file will be deprecated soon
+
+
 //IMPORT PACKAGES
 //RUN npm install tone
 import * as Tone from "tone" 
+//RUN npm install mersenne-twister
 import MersenneTwister from "mersenne-twister";  //For random generation
 
 //GLOBAL VARIABLES
