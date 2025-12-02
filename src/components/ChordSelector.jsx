@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,6 +9,7 @@ import {
   Box,
   Typography,
   Divider,
+  TextField,
 } from "@mui/material";
 
 // Root notes - 12 semitones (using sharps for black keys)
@@ -47,8 +48,19 @@ function ChordSelector({
   beatIndex,
   half,
   currentChord,
+  beatBpm,
+  defaultBpm,
+  onBeatBpmChange,
 }) {
   const [selectedRoot, setSelectedRoot] = useState(null);
+  const [bpmValue, setBpmValue] = useState("");
+
+  // Update BPM value when dialog opens or beatBpm changes
+  useEffect(() => {
+    if (open) {
+      setBpmValue(beatBpm !== undefined ? String(beatBpm) : "");
+    }
+  }, [open, beatBpm]);
 
   const handleRootSelect = (root) => {
     setSelectedRoot(root);
@@ -65,6 +77,7 @@ function ChordSelector({
 
   const handleClose = () => {
     setSelectedRoot(null);
+    setBpmValue("");
     onClose();
   };
 
@@ -72,6 +85,27 @@ function ChordSelector({
     onSelect(beatIndex, half, null);
     setSelectedRoot(null);
     onClose();
+  };
+
+  const handleBpmChange = (e) => {
+    const value = e.target.value;
+    setBpmValue(value);
+  };
+
+  const handleApplyBpm = () => {
+    if (bpmValue === "" || bpmValue === String(defaultBpm)) {
+      onBeatBpmChange(beatIndex, half, null);
+    } else {
+      const numValue = Number(bpmValue);
+      if (numValue >= 30 && numValue <= 300) {
+        onBeatBpmChange(beatIndex, half, numValue);
+      }
+    }
+  };
+
+  const handleClearBpm = () => {
+    onBeatBpmChange(beatIndex, half, null);
+    setBpmValue("");
   };
 
   const halfLabel = half === "first" ? "1st half" : "2nd half";
@@ -91,6 +125,52 @@ function ChordSelector({
         )}
       </DialogTitle>
       <DialogContent>
+        {/* BPM Setting Section */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+            Tempo (BPM) for this Beat
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <TextField
+              label="BPM"
+              type="number"
+              size="small"
+              value={bpmValue}
+              onChange={handleBpmChange}
+              placeholder={String(defaultBpm)}
+              inputProps={{ min: 30, max: 300 }}
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleApplyBpm}
+              size="medium"
+              sx={{ mt: 0.5 }}
+            >
+              Apply
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={handleClearBpm}
+              size="medium"
+              sx={{ mt: 0.5 }}
+            >
+              Clear
+            </Button>
+          </Box>
+          {beatBpm !== undefined && (
+            <Chip
+              label={`Current: ${beatBpm} BPM`}
+              color="secondary"
+              size="small"
+              sx={{ mt: 1 }}
+            />
+          )}
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+
         <Box sx={{ mb: 2 }}>
           <Button
             variant="outlined"
