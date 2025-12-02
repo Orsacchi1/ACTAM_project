@@ -1,4 +1,5 @@
 import { Container, Typography, Box } from "@mui/material";
+import { useState } from "react";
 import ControlPanel from "../components/ControlPanel";
 import Timeline from "../components/Timeline";
 import StatusDisplay from "../components/StatusDisplay";
@@ -10,17 +11,30 @@ function ChordProgression({
   measures,
   currentBeat,
   beatChords,
+  beatVelocities,
   selectedBeat,
   togglePlay,
   stopPlay,
   replayFromStart,
   refreshPage,
   addMeasure,
+  insertMeasure,
+  deleteMeasure,
   handleBpmChange,
   handleBeatClick,
   handleChordSelect,
+  handleVelocitySelect,
   setSelectedBeat,
+  soundEngine = null,
 }) {
+  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
+
+  // Adapter function for ChordSelector's onBeatBpmChange
+  // ChordSelector passes (beatIndex, half, value) but we only need (beatIndex, value)
+  const handleBeatBpmChange = (beatIndex, _half, value) => {
+    handleVelocitySelect(beatIndex, value);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Title and Description */}
@@ -37,13 +51,15 @@ function ChordProgression({
       <ControlPanel
         isPlaying={isPlaying}
         bpm={bpm}
-        measures={measures}
+        measures={measures.length}
         onPlay={togglePlay}
         onStop={stopPlay}
         onReplay={replayFromStart}
         onRefresh={refreshPage}
         onAddMeasure={addMeasure}
         onBpmChange={handleBpmChange}
+        beatsPerMeasure={beatsPerMeasure}
+        setBeatsPerMeasure={setBeatsPerMeasure}
       />
 
       {/* Timeline */}
@@ -52,6 +68,12 @@ function ChordProgression({
         currentBeat={currentBeat}
         onBeatClick={handleBeatClick}
         beatChords={beatChords}
+        beatVelocities={beatVelocities}
+        onVelocitySelect={handleVelocitySelect}
+        onInsertMeasure={insertMeasure}
+        onDeleteMeasure={deleteMeasure}
+        beatsPerMeasure={beatsPerMeasure}
+        isPlaying={isPlaying}
       />
 
       {/* Status Display */}
@@ -69,6 +91,11 @@ function ChordProgression({
             ? beatChords[selectedBeat.beatIndex]?.[selectedBeat.half]
             : null
         }
+        beatBpm={
+          selectedBeat ? beatVelocities[selectedBeat.beatIndex] : undefined
+        }
+        defaultBpm={bpm}
+        onBeatBpmChange={handleBeatBpmChange}
       />
     </Container>
   );

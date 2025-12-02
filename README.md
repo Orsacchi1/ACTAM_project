@@ -20,8 +20,8 @@ The target is both music producers and live performers, thanks to the randomic n
 1. Clone the repository:
 
 ```powershell
-git clone https://github.com/worldedge1933/ACTCM-demo.git
-cd ACTCM-demo
+git clone https://github.com/Orsacchi1/ACTAM_project
+cd ACTAM_project
 ```
 
 2. Install dependencies:
