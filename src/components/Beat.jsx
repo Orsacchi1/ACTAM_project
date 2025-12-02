@@ -1,10 +1,19 @@
 import { Box, Typography } from "@mui/material";
 
-function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
+function Beat({
+  beatInMeasure,
+  absoluteBeat,
+  currentBeat,
+  onClick,
+  chords,
+  isPlaying = false,
+}) {
   const isActive = absoluteBeat === currentBeat;
 
   const handleHalfBeatClick = (half) => {
-    onClick(absoluteBeat, half);
+    if (!isPlaying) {
+      onClick(absoluteBeat, half);
+    }
   };
 
   return (
@@ -52,10 +61,13 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
             alignItems: "center",
             justifyContent: "center",
             borderRight: "1px dashed #e0e0e0",
-            cursor: "pointer",
+            cursor: isPlaying ? "not-allowed" : "pointer",
             height: "100%",
+            opacity: isPlaying ? 0.6 : 1,
             "&:hover": {
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
+              backgroundColor: isPlaying
+                ? "transparent"
+                : "rgba(0, 0, 0, 0.04)",
             },
           }}
         >
@@ -77,10 +89,13 @@ function Beat({ beatInMeasure, absoluteBeat, currentBeat, onClick }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            cursor: "pointer",
+            cursor: isPlaying ? "not-allowed" : "pointer",
             height: "100%",
+            opacity: isPlaying ? 0.6 : 1,
             "&:hover": {
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
+              backgroundColor: isPlaying
+                ? "transparent"
+                : "rgba(0, 0, 0, 0.04)",
             },
           }}
         >

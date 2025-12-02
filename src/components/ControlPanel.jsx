@@ -68,6 +68,7 @@ function ControlPanel({
           onChange={onBpmChange}
           inputProps={{ min: 1, max: 300 }}
           sx={{ width: 100 }}
+          disabled={isPlaying}
         />
 
         <TextField

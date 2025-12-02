@@ -73,6 +73,7 @@ function ChordProgression({
         onInsertMeasure={insertMeasure}
         onDeleteMeasure={deleteMeasure}
         beatsPerMeasure={beatsPerMeasure}
+        isPlaying={isPlaying}
       />
 
       {/* Status Display */}

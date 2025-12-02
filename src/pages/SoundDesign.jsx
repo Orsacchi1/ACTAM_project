@@ -2,6 +2,7 @@ import { Container, Typography, Box, Paper, Button } from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
 import BarChart from "../components/BarChart";
+import EngineInterface from "../services/EngineInterface";
 
 /**
  * SOUND DESIGN PAGE - Configuration & Usage Guide
@@ -101,7 +102,7 @@ const KNOB_CONFIG = [
     knobs: [
       {
         id: "l3a",
-        label: "TBD.",
+        label: "Decay",
         min: 0,
         max: 1,
         step: 0.01,
@@ -109,7 +110,7 @@ const KNOB_CONFIG = [
       },
       {
         id: "l3b",
-        label: "TBD.",
+        label: "Amount",
         min: 0,
         max: 1,
         step: 0.01,
@@ -165,7 +166,7 @@ const KNOB_CONFIG = [
   },
 ];
 
-function SoundDesign(soundEngine = null) {
+function SoundDesign({ soundEngine = null }) {
   // Left Column (L), Row 1, Knobs A/B/C - Hi Cut Filter
   const [l1a, setL1a] = useState(KNOB_CONFIG[0].knobs[0].default);
   const [l1b, setL1b] = useState(KNOB_CONFIG[0].knobs[1].default);
@@ -197,19 +198,17 @@ function SoundDesign(soundEngine = null) {
   // to ensure you're using the latest value, as React state updates are asynchronous
   const handleL1aChange = (value) => {
     setL1a(value);
-    console.log("L1a changed to", value);
-    // TODO: Add audio engine update logic here using 'value' parameter
-    // Example: audioEngine.setHiCutFrequency(value);
+    soundEngine.setFiltersHiCut(value);
   };
 
   const handleL1bChange = (value) => {
     setL1b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setFiltersLoCut(value);
   };
 
   const handleL1cChange = (value) => {
     setL1c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setFiltersRes(value);
   };
 
   const handleL2aChange = (value) => {
@@ -229,12 +228,12 @@ function SoundDesign(soundEngine = null) {
 
   const handleL3aChange = (value) => {
     setL3a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setReverbDecay(value);
   };
 
   const handleL3bChange = (value) => {
     setL3b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setReverbAmount(value);
   };
 
   const handleL3cChange = (value) => {
@@ -244,22 +243,22 @@ function SoundDesign(soundEngine = null) {
 
   const handleR1aChange = (value) => {
     setR1a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeAttack(value);
   };
 
   const handleR1bChange = (value) => {
     setR1b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeDecay(value);
   };
 
   const handleR1cChange = (value) => {
     setR1c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeSustain(value);
   };
 
   const handleR1dChange = (value) => {
     setR1d(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setEnvelopeRelease(value);
   };
 
   const handleSave = () => {
@@ -272,10 +271,15 @@ function SoundDesign(soundEngine = null) {
     // TODO: Implement load functionality
   };
 
+  const handleListen = () => {
+    console.log("Listen to current sound");
+    // Example: Play a test note with current settings
+    soundEngine.playTestNote();
+  };
+
   const handleGenerate = () => {
-    console.log("Generate random sound");
     // Generate random harmonics
-    const newHarmonics = Array.from({ length: 12 }, () => Math.random());
+    const newHarmonics = soundEngine.setPartitions();
     setHarmonics(newHarmonics);
   };
 
@@ -551,6 +555,7 @@ function SoundDesign(soundEngine = null) {
                 >
                   LOAD
                 </Button>
+
                 <Button
                   variant="contained"
                   onClick={handleGenerate}
@@ -558,6 +563,15 @@ function SoundDesign(soundEngine = null) {
                   size="large"
                 >
                   GENERATE
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleListen}
+                  fullWidth
+                  size="large"
+                >
+                  LISTEN
                 </Button>
               </Box>
             </Paper>
