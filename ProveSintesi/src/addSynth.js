@@ -58,7 +58,7 @@ function createRichSoundSpectra(){
     if(cluster===1){
         base = GEN.random_incl();
     }
-
+    
     for(let i=1; i<bands.length; i++){
         
         //GENERATE VALUE FILTERED OR NOT
