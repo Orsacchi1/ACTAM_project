@@ -1,21 +1,50 @@
 import * as Tone from "tone";
-import MersenneTwister from "mersenne-twister";
+import {Voice} from './Voice.js';
 
 export default class EngineInterface {
-  constructor() {
-    this.audioCon = new AudioContext();
-    this.generator = new MersenneTwister();
-    // Additional initialization code can go here
 
+  //Generic variables always accessible (Mainly for low level sound manipulation) 
+  static SAMPLE_RATE = 44100;
+  static MIN_FREQ = 40;
+  static MAX_FREQ = 22050;
+  wetGain = 0.0;
+  wetGainReverb = 0.0;
+  
+  dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
+  envType = 1; //Choose the type of envelope [0=Normal, 1=Pluck, 2=Pad]
+  sparse = 1; //Flag for the spacing or not
+  randFilt = 0; //Has priority on cluster
+  cluster = 0;
+  voices = [];
+
+
+  
+  constructor() {
+    // Additional initialization code can go here
+    this.audioCon = new AudioContext();
+    this.ENV = this.audioCon.createGain();
+    Tone.setContext(this.audioCon);
+    this.GAIN_IN = this.audioCon.createGain();
+    this.GAIN_OUT = this.audioCon.createGain();
+    this.HI_PASS = this.audioCon.createBiquadFilter(); //Crea un filtro e lo imposta come passa alto
+    this.HI_PASS.type = "highpass";
+    this.LO_PASS = this.audioCon.createBiquadFilter(); //Crea un filtro e lo imposta come passa alto
+    this.LO_PASS.type = "lowpass";
+    this.OSC1 = this.audioCon.createOscillator(); //NOTE --> Name changed from OSC to OSC1 (more OSCS to come)
+    this.ENV = this.audioCon.createGain();
+    this.REV = new Tone.Reverb({ decay: 3 }); //Assign the decay here in order to calculate the buffer and start the sound in real time
+
+    //---IS IT POSSIBLE TO INITIALIZE ADSR TO A DEFAULT VALUE?---
     // this.envelope_attack property was an example to show how to use the class
-    this.envelope_attack = 0.01;
-    this.harmonics = [
-      1.0, 0.5, 0.3, 0.2, 0.15, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02,
-    ];
-    
+    //this.envelope_attack = 0.01;
+    //this.harmonics = [
+    //  1.0, 0.5, 0.3, 0.2, 0.15, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02,
+    //];
+
     // Array to store active oscillators for stopping sounds
-    this.activeOscillators = [];
-    this.activeGainNodes = [];
+    this.activeOscillators = [1, 0, 0];
+    this.activeGainNodes = [1, 0, 0];
+    this.activeVoices = []; //Don't know if I'll use them
   }
 
   setEnvelopeAttack(attack) {
@@ -73,16 +102,18 @@ export default class EngineInterface {
       This method randomly sets the ratios of the first 12 harmonics (including the fundamental frequency) of the timbre,
       and returns an array containing these 12 harmonic ratio values.
     */
-
+    /*
     const harmonics = [];
     for (let i = 0; i < 12; i++) {
       const ratio = Math.round(this.generator.random() * 100) / 100;
       harmonics.push(ratio);
     }
     this.harmonics = harmonics;
-
+    */
     // TODO: Implementation for applying harmonic ratios to the sound engine
-
+    this.voices[0] = new Voice(this.audioCon, this.audioCon.destination); //Values used just for testing
+    const res = this.voices[0].generateSound(1, 1, 1, 1, [1, 0, 0]); //Fix theese values -> try to use the activeOscillators
+    const harmonics = res;
     console.log("Harmonic ratios set to:", harmonics);
     return harmonics;
   }
