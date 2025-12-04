@@ -350,6 +350,7 @@ function App() {
    * Clears all chords, tempos, and resets to 4 measures
    */
   const refreshPage = () => {
+    engineInterface.stopSound();
     setIsPlaying(false);
     setCurrentBeat(0);
     setMeasures([4, 4, 4, 4]);
