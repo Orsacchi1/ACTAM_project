@@ -45,6 +45,8 @@ export default class EngineInterface {
     this.activeOscillators = [1, 0, 0];
     this.activeGainNodes = [1, 0, 0];
     this.activeVoices = []; //Don't know if I'll use them
+    
+    this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
   }
 
   setEnvelopeAttack(attack) {
