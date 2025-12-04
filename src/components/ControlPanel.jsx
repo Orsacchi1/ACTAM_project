@@ -77,6 +77,8 @@ function ControlPanel({
           value={beatsPerMeasure}
           onChange={(e) => setBeatsPerMeasure(Number(e.target.value))}
           inputProps={{ min: 1, max: 15 }}
+          onKeyDown={(e) => e.preventDefault()}
+          onFocus={(e) => e.target.blur()}
           sx={{ width: 100 }}
         />
 
