@@ -1,5 +1,7 @@
 import MersenneTwister from "mersenne-twister";
 
+//Wassup
+
 export class Voice {
   lastI = 0; //LAST INDEX INSERTED, USED FOR HARMONIC SPACING
   static K = 0.3; //DAMP factor for the exponential one
