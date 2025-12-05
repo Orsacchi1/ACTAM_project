@@ -87,9 +87,17 @@ function App() {
       let nextHalf = half;
       let found = false;
 
-      // Helper to get BPM for a specific beat (use beatVelocities or fallback to global bpm)
+      // Helper to get BPM for a specific beat
+      // A custom velocity applies to all subsequent beats until the next custom velocity
       const getBpmForBeat = (beat) => {
-        return beatVelocities[beat] !== undefined ? beatVelocities[beat] : bpm;
+        // Search backwards from the current beat to find the most recent custom velocity
+        for (let i = beat; i >= 0; i--) {
+          if (beatVelocities[i] !== undefined) {
+            return beatVelocities[i];
+          }
+        }
+        // If no custom velocity found, use global bpm
+        return bpm;
       };
 
       // Helper to calculate time for a half beat at a given BPM (in milliseconds)
@@ -279,7 +287,6 @@ function App() {
     // AUDIO ENGINE: Initialize audio context
     // Note: Must be called after user interaction (browser requirement)
 
-
     // Apply current beat's custom velocity if set
     const currentBeatVelocity = beatVelocities[currentBeat];
     if (currentBeatVelocity !== undefined) {
@@ -320,7 +327,19 @@ function App() {
     // Stop any currently playing sound before restarting
     engineInterface.stopSound();
 
-    setCurrentBeat(0);
+    // Clear any pending intervals/timeouts
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (halfBeatTimeoutRef.current) {
+      clearTimeout(halfBeatTimeoutRef.current);
+    }
+
+    // Stop playback temporarily
+    setIsPlaying(false);
+
+    // Reset to beat before the first one
+    setCurrentBeat(-1);
 
     // Apply first beat's custom velocity if set
     const firstBeatVelocity = beatVelocities[0];
@@ -328,21 +347,10 @@ function App() {
       setBpm(firstBeatVelocity);
     }
 
-    // Play beat 0's chords immediately when restarting
-    const chords = beatChords[0];
-    if (chords?.first) {
-      playChordRef.current?.(chords.first, 0, "first");
-    }
-    if (chords?.second) {
-      // Schedule second half chord
-      const currentHalfBeatInterval =
-        (60 / (firstBeatVelocity || bpm) / 2) * 1000;
-      setTimeout(() => {
-        playChordRef.current?.(chords.second, 0, "second");
-      }, currentHalfBeatInterval);
-    }
-
-    setIsPlaying(true);
+    // Use setTimeout to ensure state updates before restarting
+    setTimeout(() => {
+      setIsPlaying(true);
+    }, 0);
   };
 
   /**
@@ -350,6 +358,7 @@ function App() {
    * Clears all chords, tempos, and resets to 4 measures
    */
   const refreshPage = () => {
+    engineInterface.stopSound();
     setIsPlaying(false);
     setCurrentBeat(0);
     setMeasures([4, 4, 4, 4]);
