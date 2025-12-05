@@ -1,15 +1,14 @@
 import * as Tone from "tone";
-import {Voice} from './Voice.js';
+import { Voice } from "./Voice.js";
 
 export default class EngineInterface {
-
-  //Generic variables always accessible (Mainly for low level sound manipulation) 
+  //Generic variables always accessible (Mainly for low level sound manipulation)
   static SAMPLE_RATE = 44100;
   static MIN_FREQ = 40;
   static MAX_FREQ = 22050;
   wetGain = 0.0;
   wetGainReverb = 0.0;
-  
+
   dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
   envType = 1; //Choose the type of envelope [0=Normal, 1=Pluck, 2=Pad]
   sparse = 1; //Flag for the spacing or not
@@ -17,8 +16,6 @@ export default class EngineInterface {
   cluster = 0;
   voices = [];
 
-
-  
   constructor() {
     // Additional initialization code can go here
     this.audioCon = new AudioContext();
@@ -132,7 +129,6 @@ export default class EngineInterface {
   }
 
   playChordWithDuration(frequencies, duration) {
-
     /* IMPORTANT:
 
       Logic here is just a test implementation to simulate chord playing.
@@ -156,7 +152,9 @@ export default class EngineInterface {
     }
 
     // Pick a random frequency from the chord
-    const randomIndex = Math.floor(this.generator.random() * frequencies.length);
+    const randomIndex = Math.floor(
+      this.generator.random() * frequencies.length
+    );
     const frequency = frequencies[randomIndex];
 
     // Create oscillator and gain node
@@ -216,7 +214,6 @@ export default class EngineInterface {
   }
 
   stopSound() {
-
     /* IMPORTANT:
 
       Logic here is just a test implementation to simulate stopping sound.
@@ -263,5 +260,4 @@ export default class EngineInterface {
     // This function is used to play a demo melody when click the LISTEN button in Sound Design page
     // TODO: Implementation for playing a test note with current settings
   }
-
 }
