@@ -72,7 +72,7 @@ const KNOB_CONFIG = [
     knobs: [
       {
         id: "l2a",
-        label: "AMT",
+        label: "Time",
         min: 0,
         max: 1,
         step: 0.01,
@@ -80,7 +80,7 @@ const KNOB_CONFIG = [
       },
       {
         id: "l2b",
-        label: "Pin-Pong",
+        label: "Amount",
         min: 0,
         max: 1,
         step: 0.01,
