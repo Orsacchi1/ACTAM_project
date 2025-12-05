@@ -4,7 +4,7 @@ import { Voice } from "./Voice.js";
 export default class EngineInterface {
   //Generic variables always accessible (Mainly for low level sound manipulation)
   static SAMPLE_RATE = 44100;
-  static MIN_FREQ = 40;
+  static MIN_FREQ = 0;
   static MAX_FREQ = 22050;
   wetGain = 0.0;
   wetGainReverb = 0.0;
@@ -42,7 +42,7 @@ export default class EngineInterface {
     this.activeOscillators = [1, 0, 0];
     this.activeGainNodes = [1, 0, 0];
     this.activeVoices = []; //Don't know if I'll use them
-    
+
     this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
   }
 
