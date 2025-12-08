@@ -1,12 +1,33 @@
-import { Container, Typography, Box, Paper, Divider } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Divider,
+  Button,
+} from "@mui/material";
 import { useState } from "react";
+import { Refresh } from "@mui/icons-material";
 import Knob from "../components/Knob";
 import BarChart from "../components/BarChart";
+import SpectrumCurve from "../components/SpectrumCurve";
 
-function Test({soundEngine = null}) {
+function Test({ soundEngine = null }) {
   const [volume, setVolume] = useState(50);
   const [frequency, setFrequency] = useState(440);
   const [resonance, setResonance] = useState(0.5);
+
+  // Generate initial spectrum data
+  const generateSpectrumData = () => {
+    const harmonics = new Float32Array(128);
+
+    for (let i = 0; i < 128; i++) {
+      harmonics[i] = Math.random();
+    }
+    return harmonics;
+  };
+
+  const [spectrumData, setSpectrumData] = useState(generateSpectrumData());
 
   // Code block styling with syntax highlighting colors
   const codeBlockStyle = {
@@ -131,6 +152,50 @@ function Test({soundEngine = null}) {
             value and scales to 80% of the container height. All other bars
             scale proportionally. Colors change based on height: Red (&gt;70%),
             Orange (&gt;50%), Purple (default).
+          </Typography>
+        </Box>
+      </Paper>
+
+      {/* 3. SpectrumCurve Component Demo */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          📈 SpectrumCurve Component Demo
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          This component displays a 128-value array as a smooth curve, perfect
+          for visualizing harmonic spectra or frequency responses.
+        </Typography>
+
+        {/* SpectrumCurve Display */}
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+          <SpectrumCurve
+            data={spectrumData}
+            width={600}
+            height={200}
+            lineColor="#9c27b0"
+            lineWidth={2}
+            fillColor="rgba(156, 39, 176, 0.1)"
+          />
+        </Box>
+
+        {/* Generate Button */}
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<Refresh />}
+            onClick={() => setSpectrumData(generateSpectrumData())}
+          >
+            Generate Random Curve
+          </Button>
+        </Box>
+
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            💡 <strong>Features:</strong> Accepts 128-length Float32Array,
+            automatically normalizes values, renders smooth curves using
+            quadratic Bezier interpolation, and includes semi-transparent fill
+            under the curve. Click the button to generate a new random curve!
           </Typography>
         </Box>
       </Paper>
