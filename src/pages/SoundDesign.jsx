@@ -1,7 +1,7 @@
 import { Container, Typography, Box, Paper, Button } from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
-import BarChart from "../components/BarChart";
+import SpectrumCurve from "../components/SpectrumCurve";
 import EngineInterface from "../services/EngineInterface";
 
 /**
@@ -188,10 +188,14 @@ function SoundDesign({ soundEngine = null }) {
   const [r1c, setR1c] = useState(KNOB_CONFIG[3].knobs[2].default);
   const [r1d, setR1d] = useState(KNOB_CONFIG[3].knobs[3].default);
 
-  // Wavetable (WT) - 12 harmonics
-  const [harmonics, setHarmonics] = useState([
-    1.0, 0.5, 0.3, 0.2, 0.15, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02,
-  ]);
+  // Wavetable (WT) - 128 harmonics
+  const [harmonics, setHarmonics] = useState(() => {
+    const data = new Float32Array(128);
+    for (let i = 0; i < 128; i++) {
+      data[i] = Math.random();
+    }
+    return data;
+  });
 
   // Handler functions for knobs
   // IMPORTANT: Use the 'value' parameter (not the state variable) for audio engine updates
@@ -508,7 +512,7 @@ function SoundDesign({ soundEngine = null }) {
               </Box>
             </Paper>
 
-            {/* Row 2 - BarChart */}
+            {/* Row 2 - SpectrumCurve */}
             <Paper
               elevation={0}
               sx={{
@@ -518,7 +522,23 @@ function SoundDesign({ soundEngine = null }) {
                 borderColor: "grey.200",
               }}
             >
-              <BarChart values={harmonics} height={200} title="Harmonics" />
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ mb: 2, fontWeight: 600 }}
+              >
+                Partitions
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <SpectrumCurve
+                  data={harmonics}
+                  width={600}
+                  height={200}
+                  lineColor="#9c27b0"
+                  lineWidth={2}
+                  fillColor="rgba(156, 39, 176, 0.1)"
+                />
+              </Box>
             </Paper>
 
             {/* Row 3 - 3 Buttons */}

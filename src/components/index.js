@@ -5,3 +5,4 @@ export { default as Measure } from "./Measure";
 export { default as Beat } from "./Beat";
 export { default as StatusDisplay } from "./StatusDisplay";
 export { default as ChordSelector } from "./ChordSelector";
+export { default as SpectrumCurve } from "./SpectrumCurve";
