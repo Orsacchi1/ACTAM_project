@@ -12,31 +12,30 @@ import EngineInterface from "../services/EngineInterface";
  * - Modify knob labels, ranges, etc. by editing this configuration only
  *
  * === STATE VARIABLES (Current knob values) ===
- * Left Column, Row 1: l1a, l1b, l1c (Hi Cut Filter - Frequency, Resonance, Amount)
- * Left Column, Row 2: l2a, l2b, l2c (Lo Cut Filter - Frequency, Resonance, Amount)
- * Left Column, Row 3: l3a, l3b, l3c (Resonance Filter - Frequency, Q Factor, Amount)
- * Right Column, Row 1: r1a, r1b, r1c, r1d (Envelope - Attack, Decay, Sustain, Release)
- * Right Column, Row 2: harmonics (array of 12 harmonic values, range 0-1)
+ * Filters (Row 1, horizontal): l1a, l1b, l1c (Hi-Cut, Lo-Cut, Res)
+ * Delay (Row 2, vertical): l2a, l2b (Time, Mix)
+ * Reverb (Row 2, vertical): l3a, l3b (Decay, Mix)
+ * Gain (Row 2, vertical): l4a, l4b (In, Out)
+ * Envelope (Right, horizontal): r1a, r1b, r1c, r1d (Attack, Decay, Sustain, Release)
+ * Partitions: harmonics (128-value Float32Array)
  *
- * === HANDLER FUNCTIONS (Add audio engine logic here) ===
- * handleL1aChange(value), handleL1bChange(value), handleL1cChange(value)
- * handleL2aChange(value), handleL2bChange(value), handleL2cChange(value)
- * handleL3aChange(value), handleL3bChange(value), handleL3cChange(value)
- * handleR1aChange(value), handleR1bChange(value), handleR1cChange(value), handleR1dChange(value)
- * - Each function contains a TODO comment where you can add audio engine update logic
- * - These functions are called whenever a knob value changes
+ * === HANDLER FUNCTIONS ===
+ * handleL1aChange, handleL1bChange, handleL1cChange (Filters)
+ * handleL2aChange, handleL2bChange (Delay)
+ * handleL3aChange, handleL3bChange (Reverb)
+ * handleL4aChange, handleL4bChange (Gain)
+ * handleR1aChange, handleR1bChange, handleR1cChange, handleR1dChange (Envelope)
+ * - Each function contains audio engine update logic
  *
  * === BUTTON FUNCTIONS ===
- * handleGenerate(): Randomly generates harmonics, modifying the 'harmonics' variable
- * - Customize the random algorithm to generate more musically useful harmonic distributions
+ * handleGenerate(): Randomly generates harmonics
  * handleSave(): Save all current parameters (TODO)
  * handleLoad(): Load saved parameters (TODO)
  */
 
 // Knob configuration dictionary
-// Format: [Left/Right][Row Number][Knob Position A/B/C/D]
 const KNOB_CONFIG = [
-  // Section 0 - Left Column, Row 1 (l1a, l1b, l1c) - Hi Cut Filter (Low Pass)
+  // Section 0 - Filters (l1a, l1b, l1c)
   {
     title: "Filters",
     knobs: [
@@ -66,7 +65,7 @@ const KNOB_CONFIG = [
       },
     ],
   },
-  // Section 1 - Left Column, Row 2 (l2a, l2b, l2c) - Lo Cut Filter (High Pass)
+  // Section 1 - Delay (l2a, l2b)
   {
     title: "Delay",
     knobs: [
@@ -80,15 +79,7 @@ const KNOB_CONFIG = [
       },
       {
         id: "l2b",
-        label: "Amount",
-        min: 0,
-        max: 1,
-        step: 0.01,
-        default: 0.5,
-      },
-      {
-        id: "l2c",
-        label: "TBD.",
+        label: "Mix",
         min: 0,
         max: 1,
         step: 0.01,
@@ -96,7 +87,7 @@ const KNOB_CONFIG = [
       },
     ],
   },
-  // Section 2 - Left Column, Row 3 (l3a, l3b, l3c) - Resonance Filter (Band Pass)
+  // Section 2 - Reverb (l3a, l3b)
   {
     title: "Reverb",
     knobs: [
@@ -110,15 +101,7 @@ const KNOB_CONFIG = [
       },
       {
         id: "l3b",
-        label: "Amount",
-        min: 0,
-        max: 1,
-        step: 0.01,
-        default: 0.5,
-      },
-      {
-        id: "l3c",
-        label: "TBD.",
+        label: "Mix",
         min: 0,
         max: 1,
         step: 0.01,
@@ -126,7 +109,29 @@ const KNOB_CONFIG = [
       },
     ],
   },
-  // Section 3 - Right Column, Row 1 (r1a, r1b, r1c, r1d) - Envelope (ADSR)
+  // Section 3 - Gain (l4a, l4b)
+  {
+    title: "Gain",
+    knobs: [
+      {
+        id: "l4a",
+        label: "In",
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 0.5,
+      },
+      {
+        id: "l4b",
+        label: "Out",
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 0.5,
+      },
+    ],
+  },
+  // Section 4 - Envelope (r1a, r1b, r1c, r1d)
   {
     title: "Envelope",
     knobs: [
@@ -167,26 +172,28 @@ const KNOB_CONFIG = [
 ];
 
 function SoundDesign({ soundEngine = null }) {
-  // Left Column (L), Row 1, Knobs A/B/C - Hi Cut Filter
+  // Filters (l1a, l1b, l1c)
   const [l1a, setL1a] = useState(KNOB_CONFIG[0].knobs[0].default);
   const [l1b, setL1b] = useState(KNOB_CONFIG[0].knobs[1].default);
   const [l1c, setL1c] = useState(KNOB_CONFIG[0].knobs[2].default);
 
-  // Left Column (L), Row 2, Knobs A/B/C - Lo Cut Filter
+  // Delay (l2a, l2b)
   const [l2a, setL2a] = useState(KNOB_CONFIG[1].knobs[0].default);
   const [l2b, setL2b] = useState(KNOB_CONFIG[1].knobs[1].default);
-  const [l2c, setL2c] = useState(KNOB_CONFIG[1].knobs[2].default);
 
-  // Left Column (L), Row 3, Knobs A/B/C - Resonance Filter
+  // Reverb (l3a, l3b)
   const [l3a, setL3a] = useState(KNOB_CONFIG[2].knobs[0].default);
   const [l3b, setL3b] = useState(KNOB_CONFIG[2].knobs[1].default);
-  const [l3c, setL3c] = useState(KNOB_CONFIG[2].knobs[2].default);
 
-  // Right Column (R), Row 1, Knobs A/B/C/D - Envelope (ADSR)
-  const [r1a, setR1a] = useState(KNOB_CONFIG[3].knobs[0].default);
-  const [r1b, setR1b] = useState(KNOB_CONFIG[3].knobs[1].default);
-  const [r1c, setR1c] = useState(KNOB_CONFIG[3].knobs[2].default);
-  const [r1d, setR1d] = useState(KNOB_CONFIG[3].knobs[3].default);
+  // Gain (l4a, l4b)
+  const [l4a, setL4a] = useState(KNOB_CONFIG[3].knobs[0].default);
+  const [l4b, setL4b] = useState(KNOB_CONFIG[3].knobs[1].default);
+
+  // Envelope (r1a, r1b, r1c, r1d)
+  const [r1a, setR1a] = useState(KNOB_CONFIG[4].knobs[0].default);
+  const [r1b, setR1b] = useState(KNOB_CONFIG[4].knobs[1].default);
+  const [r1c, setR1c] = useState(KNOB_CONFIG[4].knobs[2].default);
+  const [r1d, setR1d] = useState(KNOB_CONFIG[4].knobs[3].default);
 
   // Wavetable (WT) - 128 harmonics
   const [harmonics, setHarmonics] = useState(() => {
@@ -200,6 +207,8 @@ function SoundDesign({ soundEngine = null }) {
   // Handler functions for knobs
   // IMPORTANT: Use the 'value' parameter (not the state variable) for audio engine updates
   // to ensure you're using the latest value, as React state updates are asynchronous
+  
+  // Filters handlers (l1a, l1b, l1c)
   const handleL1aChange = (value) => {
     setL1a(value);
     soundEngine.setFiltersHiCut(value);
@@ -215,6 +224,7 @@ function SoundDesign({ soundEngine = null }) {
     soundEngine.setFiltersRes(value);
   };
 
+  // Delay handlers (l2a, l2b)
   const handleL2aChange = (value) => {
     setL2a(value);
     // TODO: Add audio engine update logic here using 'value' parameter
@@ -225,11 +235,7 @@ function SoundDesign({ soundEngine = null }) {
     // TODO: Add audio engine update logic here using 'value' parameter
   };
 
-  const handleL2cChange = (value) => {
-    setL2c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
-  };
-
+  // Reverb handlers (l3a, l3b)
   const handleL3aChange = (value) => {
     setL3a(value);
     soundEngine.setReverbDecay(value);
@@ -240,11 +246,18 @@ function SoundDesign({ soundEngine = null }) {
     soundEngine.setReverbAmount(value);
   };
 
-  const handleL3cChange = (value) => {
-    setL3c(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+  // Gain handlers (l4a, l4b)
+  const handleL4aChange = (value) => {
+    setL4a(value);
+    // TODO: Add GainIn logic here
   };
 
+  const handleL4bChange = (value) => {
+    setL4b(value);
+    // TODO: Add GainOut logic here
+  };
+
+  // Envelope handlers (r1a, r1b, r1c, r1d)
   const handleR1aChange = (value) => {
     setR1a(value);
     soundEngine.setEnvelopeAttack(value);
@@ -358,95 +371,144 @@ function SoundDesign({ soundEngine = null }) {
               </Box>
             </Paper>
 
-            {/* Row 2 - Lo Cut Filter */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                bgcolor: "grey.50",
-                border: "1px solid",
-                borderColor: "grey.200",
-              }}
-            >
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ mb: 1, fontWeight: 600 }}
+            {/* Row 2 - Delay, Reverb and Gain combined horizontally */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              {/* Delay */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  bgcolor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  flex: 1,
+                }}
               >
-                {KNOB_CONFIG[1].title}
-              </Typography>
-              <Box sx={{ display: "flex", gap: 4, justifyContent: "center" }}>
-                <Knob
-                  label={KNOB_CONFIG[1].knobs[0].label}
-                  min={KNOB_CONFIG[1].knobs[0].min}
-                  max={KNOB_CONFIG[1].knobs[0].max}
-                  step={KNOB_CONFIG[1].knobs[0].step}
-                  value={l2a}
-                  onChange={handleL2aChange}
-                />
-                <Knob
-                  label={KNOB_CONFIG[1].knobs[1].label}
-                  min={KNOB_CONFIG[1].knobs[1].min}
-                  max={KNOB_CONFIG[1].knobs[1].max}
-                  step={KNOB_CONFIG[1].knobs[1].step}
-                  value={l2b}
-                  onChange={handleL2bChange}
-                />
-                <Knob
-                  label={KNOB_CONFIG[1].knobs[2].label}
-                  min={KNOB_CONFIG[1].knobs[2].min}
-                  max={KNOB_CONFIG[1].knobs[2].max}
-                  step={KNOB_CONFIG[1].knobs[2].step}
-                  value={l2c}
-                  onChange={handleL2cChange}
-                />
-              </Box>
-            </Paper>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{ mb: 1, fontWeight: 600 }}
+                >
+                  {KNOB_CONFIG[1].title}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    alignItems: "center",
+                  }}
+                >
+                  <Knob
+                    label={KNOB_CONFIG[1].knobs[0].label}
+                    min={KNOB_CONFIG[1].knobs[0].min}
+                    max={KNOB_CONFIG[1].knobs[0].max}
+                    step={KNOB_CONFIG[1].knobs[0].step}
+                    value={l2a}
+                    onChange={handleL2aChange}
+                  />
+                  <Knob
+                    label={KNOB_CONFIG[1].knobs[1].label}
+                    min={KNOB_CONFIG[1].knobs[1].min}
+                    max={KNOB_CONFIG[1].knobs[1].max}
+                    step={KNOB_CONFIG[1].knobs[1].step}
+                    value={l2b}
+                    onChange={handleL2bChange}
+                  />
+                </Box>
+              </Paper>
 
-            {/* Row 3 - Resonance Filter */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                bgcolor: "grey.50",
-                border: "1px solid",
-                borderColor: "grey.200",
-              }}
-            >
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ mb: 1, fontWeight: 600 }}
+              {/* Reverb */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  bgcolor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  flex: 1,
+                }}
               >
-                {KNOB_CONFIG[2].title}
-              </Typography>
-              <Box sx={{ display: "flex", gap: 4, justifyContent: "center" }}>
-                <Knob
-                  label={KNOB_CONFIG[2].knobs[0].label}
-                  min={KNOB_CONFIG[2].knobs[0].min}
-                  max={KNOB_CONFIG[2].knobs[0].max}
-                  step={KNOB_CONFIG[2].knobs[0].step}
-                  value={l3a}
-                  onChange={handleL3aChange}
-                />
-                <Knob
-                  label={KNOB_CONFIG[2].knobs[1].label}
-                  min={KNOB_CONFIG[2].knobs[1].min}
-                  max={KNOB_CONFIG[2].knobs[1].max}
-                  step={KNOB_CONFIG[2].knobs[1].step}
-                  value={l3b}
-                  onChange={handleL3bChange}
-                />
-                <Knob
-                  label={KNOB_CONFIG[2].knobs[2].label}
-                  min={KNOB_CONFIG[2].knobs[2].min}
-                  max={KNOB_CONFIG[2].knobs[2].max}
-                  step={KNOB_CONFIG[2].knobs[2].step}
-                  value={l3c}
-                  onChange={handleL3cChange}
-                />
-              </Box>
-            </Paper>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{ mb: 1, fontWeight: 600 }}
+                >
+                  {KNOB_CONFIG[2].title}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    alignItems: "center",
+                  }}
+                >
+                  <Knob
+                    label={KNOB_CONFIG[2].knobs[0].label}
+                    min={KNOB_CONFIG[2].knobs[0].min}
+                    max={KNOB_CONFIG[2].knobs[0].max}
+                    step={KNOB_CONFIG[2].knobs[0].step}
+                    value={l3a}
+                    onChange={handleL3aChange}
+                  />
+                  <Knob
+                    label={KNOB_CONFIG[2].knobs[1].label}
+                    min={KNOB_CONFIG[2].knobs[1].min}
+                    max={KNOB_CONFIG[2].knobs[1].max}
+                    step={KNOB_CONFIG[2].knobs[1].step}
+                    value={l3b}
+                    onChange={handleL3bChange}
+                  />
+                </Box>
+              </Paper>
+
+              {/* Gain */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  bgcolor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{ mb: 1, fontWeight: 600 }}
+                >
+                  {KNOB_CONFIG[3].title}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    alignItems: "center",
+                  }}
+                >
+                  <Knob
+                    label={KNOB_CONFIG[3].knobs[0].label}
+                    min={KNOB_CONFIG[3].knobs[0].min}
+                    max={KNOB_CONFIG[3].knobs[0].max}
+                    step={KNOB_CONFIG[3].knobs[0].step}
+                    value={l4a}
+                    onChange={handleL4aChange}
+                  />
+                  <Knob
+                    label={KNOB_CONFIG[3].knobs[1].label}
+                    min={KNOB_CONFIG[3].knobs[1].min}
+                    max={KNOB_CONFIG[3].knobs[1].max}
+                    step={KNOB_CONFIG[3].knobs[1].step}
+                    value={l4b}
+                    onChange={handleL4bChange}
+                  />
+                </Box>
+              </Paper>
+            </Box>
           </Box>
 
           {/* Right Section - 3 Rows */}
@@ -474,38 +536,38 @@ function SoundDesign({ soundEngine = null }) {
                 gutterBottom
                 sx={{ mb: 1, fontWeight: 600 }}
               >
-                {KNOB_CONFIG[3].title}
+                {KNOB_CONFIG[4].title}
               </Typography>
               <Box sx={{ display: "flex", gap: 3, justifyContent: "center" }}>
                 <Knob
-                  label={KNOB_CONFIG[3].knobs[0].label}
-                  min={KNOB_CONFIG[3].knobs[0].min}
-                  max={KNOB_CONFIG[3].knobs[0].max}
-                  step={KNOB_CONFIG[3].knobs[0].step}
+                  label={KNOB_CONFIG[4].knobs[0].label}
+                  min={KNOB_CONFIG[4].knobs[0].min}
+                  max={KNOB_CONFIG[4].knobs[0].max}
+                  step={KNOB_CONFIG[4].knobs[0].step}
                   value={r1a}
                   onChange={handleR1aChange}
                 />
                 <Knob
-                  label={KNOB_CONFIG[3].knobs[1].label}
-                  min={KNOB_CONFIG[3].knobs[1].min}
-                  max={KNOB_CONFIG[3].knobs[1].max}
-                  step={KNOB_CONFIG[3].knobs[1].step}
+                  label={KNOB_CONFIG[4].knobs[1].label}
+                  min={KNOB_CONFIG[4].knobs[1].min}
+                  max={KNOB_CONFIG[4].knobs[1].max}
+                  step={KNOB_CONFIG[4].knobs[1].step}
                   value={r1b}
                   onChange={handleR1bChange}
                 />
                 <Knob
-                  label={KNOB_CONFIG[3].knobs[2].label}
-                  min={KNOB_CONFIG[3].knobs[2].min}
-                  max={KNOB_CONFIG[3].knobs[2].max}
-                  step={KNOB_CONFIG[3].knobs[2].step}
+                  label={KNOB_CONFIG[4].knobs[2].label}
+                  min={KNOB_CONFIG[4].knobs[2].min}
+                  max={KNOB_CONFIG[4].knobs[2].max}
+                  step={KNOB_CONFIG[4].knobs[2].step}
                   value={r1c}
                   onChange={handleR1cChange}
                 />
                 <Knob
-                  label={KNOB_CONFIG[3].knobs[3].label}
-                  min={KNOB_CONFIG[3].knobs[3].min}
-                  max={KNOB_CONFIG[3].knobs[3].max}
-                  step={KNOB_CONFIG[3].knobs[3].step}
+                  label={KNOB_CONFIG[4].knobs[3].label}
+                  min={KNOB_CONFIG[4].knobs[3].min}
+                  max={KNOB_CONFIG[4].knobs[3].max}
+                  step={KNOB_CONFIG[4].knobs[3].step}
                   value={r1d}
                   onChange={handleR1dChange}
                 />
