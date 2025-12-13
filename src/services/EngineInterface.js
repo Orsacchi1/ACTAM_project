@@ -14,7 +14,12 @@ export default class EngineInterface {
   sparse = 1; //Flag for the spacing or not
   randFilt = 0; //Has priority on cluster
   cluster = 0;
-  voices = [];
+  voices = []; //Contains the array with the spectra of the different voices [useful for expanded capabilities]
+  //Default values for ADSR envelope
+  a = 0.1;
+  d = 0.2;
+  s = 0.5;
+  r = 0.2;
 
   constructor() {
     // Additional initialization code can go here
@@ -27,23 +32,25 @@ export default class EngineInterface {
     this.HI_PASS.type = "highpass";
     this.LO_PASS = this.audioCon.createBiquadFilter(); //Crea un filtro e lo imposta come passa alto
     this.LO_PASS.type = "lowpass";
-    this.OSC1 = this.audioCon.createOscillator(); //NOTE --> Name changed from OSC to OSC1 (more OSCS to come)
+    this.VOICE1 = this.audioCon.createOscillator(); // Will be 4 voices in total for all the main tetrachords
     this.ENV = this.audioCon.createGain();
     this.REV = new Tone.Reverb({ decay: 3 }); //Assign the decay here in order to calculate the buffer and start the sound in real time
 
     //---IS IT POSSIBLE TO INITIALIZE ADSR TO A DEFAULT VALUE?---
-    // this.envelope_attack property was an example to show how to use the class
-    //this.envelope_attack = 0.01;
-    //this.harmonics = [
-    //  1.0, 0.5, 0.3, 0.2, 0.15, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02,
-    //];
 
     // Array to store active oscillators for stopping sounds
     this.activeOscillators = [1, 0, 0];
     this.activeGainNodes = [1, 0, 0];
-    this.activeVoices = []; //Don't know if I'll use them
+    this.activeVoices = [1, 0, 0, 0]; //Don't know if I'll use them
 
     this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
+
+    this.setupConnections();
+    this.initializeValues();
+    console.log("ActiveOsc:", this.activeOscillators);
+    console.log("AudioCon:", this.audioCon);
+    //Pass the audio context and connect the voice to the envelope
+    this.voices[0] = new Voice(this.audioCon, this.ENV);
   }
 
   setEnvelopeAttack(attack) {
@@ -71,17 +78,33 @@ export default class EngineInterface {
 
   setFiltersHiCut(freq) {
     // TODO: Implementation for setting filters hi-cut frequency
+    this.HI_PASS.frequency.value = freq;
     console.log(`Setting filters hi-cut frequency to: ${freq}`);
+  }
+
+  getFiltersHiCut() {
+    return this.HI_PASS.frequency.value;
   }
 
   setFiltersLoCut(freq) {
     // TODO: Implementation for setting filters lo-cut frequency
+    this.LO_PASS.frequency.value = freq;
     console.log(`Setting filters lo-cut frequency to: ${freq}`);
   }
 
-  setFiltersRes(freq) {
+  getFiltersLoCut() {
+    return this.LO_PASS.frequency.value;
+  }
+
+  setFiltersRes(res) {
     // TODO: Implementation for setting filters resonance frequency
-    console.log(`Setting filters resonance frequency to: ${freq}`);
+    this.HI_PASS.Q.value = res;
+    this.LO_PASS.Q.value = res;
+    console.log(`Setting filters resonance frequency to: ${res}`);
+  }
+
+  getFiltersRes() {
+    return this.HI_PASS.Q.value;
   }
 
   // TODO: There should be more methods here to set other parameters.
@@ -97,28 +120,44 @@ export default class EngineInterface {
   }
 
   setPartitions() {
-    /*
-      This method randomly sets the ratios of the first 12 harmonics (including the fundamental frequency) of the timbre,
-      and returns an array containing these 12 harmonic ratio values.
-    */
-    /*
-    const harmonics = [];
-    for (let i = 0; i < 12; i++) {
-      const ratio = Math.round(this.generator.random() * 100) / 100;
-      harmonics.push(ratio);
+    // Assicurati AudioContext attivo
+    if (this.audioCon.state === "suspended") {
+      this.audioCon.resume();
+      console.log("Audio Context resumed...");
     }
-    this.harmonics = harmonics;
-    */
-    // TODO: Implementation for applying harmonic ratios to the sound engine
-    this.voices[0] = new Voice(this.audioCon, this.audioCon.destination); //Values used just for testing
-    const res = this.voices[0].generateSound(1, 1, 1, 1, [1, 0, 0]); //Fix theese values -> try to use the activeOscillators
-    const harmonics = res;
-    console.log("Harmonic ratios set to:", harmonics);
+
+    // Inizializza activeOscillators se necessario
+    if (!Array.isArray(this.activeOscillators)) {
+      this.activeOscillators = [1, 0, 0];
+      console.log(
+        "activeOscillators array initialized at default values [1, 0, 0]"
+      );
+    }
+
+    // Copia sicura
+    const actOsc = [...this.activeOscillators];
+    console.log("actOsc:", this.activeOscillators);
+    //Values passed in soundGeneration
+
+    console.log(actOsc);
+    const harmonics = this.voices[0].generateSound(1, 1, 1, 2, actOsc);
+    //Save the spectra into voices
+    this.voices[0].setHarmonics(harmonics);
+    console.log(harmonics.length, harmonics);
+    //Automatically initialized to 0
+    const imag = new Float32Array(harmonics.length);
+    const real = new Float32Array(harmonics);
+    //Create the periodic wave and assign it to the voice
+    const periodicWave = this.audioCon.createPeriodicWave(real, imag, {
+      disableNormalization: false,
+    });
+    this.VOICE1.setPeriodicWave(periodicWave);
+    //console.log(this.voices[0]);
     return harmonics;
   }
 
   getHarmonics() {
-    return this.harmonics;
+    return this.voices[0].getHarmonics;
   }
 
   playNoteWithDuration(frequency, duration) {
@@ -251,16 +290,52 @@ export default class EngineInterface {
     });
 
     // Clear arrays
-    this.activeOscillators = [];
-    this.activeGainNodes = [];
+    //this.activeOscillators = [];
+    //this.activeGainNodes = [];
 
     console.log("Stopping all sounds");
   }
 
   playTestNote() {
     console.log("Playing test note");
+    if (this.VOICE1.state === "started") {
+      this.VOICE1.stop();
+    } else {
+      this.VOICE1.frequency.value = 220;
+      this.VOICE1.start();
+    }
+
     // This function is used to play a demo melody when click the LISTEN button in Sound Design page
     // TODO: Implementation for playing a test note with current settings
+  }
+
+  setupConnections() {
+    this.VOICE1.connect(this.ENV)
+      .connect(this.LO_PASS)
+      .connect(this.HI_PASS)
+      .connect(this.GAIN_IN); //This will connect to the delay later
+    //.connect(this.REV); //This will be erased
+    //Tone.connect(this.REV, this.GAIN_OUT);  BYPASS FOR NOW
+    this.GAIN_IN.connect(this.GAIN_OUT);
+    this.GAIN_OUT.connect(this.audioCon.destination);
+  }
+
+  initializeValues() {
+    this.initFilters();
+    this.initGains();
+  }
+
+  initFilters() {
+    this.LO_PASS.frequency.value = 22050; //Filtered frequency
+    this.LO_PASS.Q.value = 2; //Resonance
+    this.HI_PASS.frequency.value = 0;
+    this.HI_PASS.Q.value = 2;
+  }
+
+  initGains() {
+    this.GAIN_IN.gain.value = 0.8;
+    this.GAIN_OUT.gain.value = 0.8;
+    this.ENV.gain.value = 1;
   }
 }
 //test

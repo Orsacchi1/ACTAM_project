@@ -1,10 +1,7 @@
 import MersenneTwister from "mersenne-twister";
 
-//Wassup
-
 export class Voice {
   lastI = 0; //LAST INDEX INSERTED, USED FOR HARMONIC SPACING
-  static K = 0.3; //DAMP factor for the exponential one
 
   constructor(audioCon, dest) {
     //Match the audio context with the context of the main audio engine
@@ -12,7 +9,7 @@ export class Voice {
     this.audioCon = audioCon;
     this.voiceGain = this.audioCon.createGain();
     this.voiceGain.gain.value = 0.5;
-
+    this.harmonics = [];
     //Create a new internal generator
     this.GEN = new MersenneTwister();
 
@@ -27,6 +24,7 @@ export class Voice {
     this.OSC3.connect(this.voiceGain);
 
     this.voiceGain.connect(dest);
+    console.log("AudioCon:", this.audioCon);
   }
 
   //SOUND CREATION: Used for generating one single oscillator spectra
@@ -37,6 +35,7 @@ export class Voice {
     let base;
     const CL = 4; //The harmonics are grouped by 4
     const p = 0.7; //Probability of getting an active partial
+    const K = 2; //DAMP factor for the exponential one
 
     bands[0] = 0; //DC component is always zero
     imag[0] = 0;
@@ -68,10 +67,10 @@ export class Voice {
         } else {
           if (dampType == 0) {
             //Using a linear damping
-            bands[i] = val * (1 / (1 + this.lastI)); //First one is MAX 0.5 so we have to heavily normalize
+            bands[i] = val * (1 / (10 + this.lastI)); //First one is MAX 0.5 so we have to heavily normalize
           } else if (dampType == 1) {
             //Using a quadratic one
-            bands[i] = val * (1 / (1 + this.lastI) ** 2);
+            bands[i] = val * (1 / (5 + this.lastI) ** 2);
           } else if (dampType == 2) {
             //Using exponential damping
             bands[i] = val * Math.exp(-this.lastI / K);
@@ -114,16 +113,45 @@ export class Voice {
       if (selected[i] === 1) {
         const res = this.generatePartials(cluster, randFilt, sparse, dampType);
         //waves[i] = res[0];
+        console.log(res);
         bands[i] = res;
       } else {
         //waves[i] = null;
         bands[i] = null;
       }
     }
+    let tot = [];
+    for (let i = 0; i < selected.length; i++) {
+      if (bands[i] != null) {
+        const len = bands[i].length;
+        for (let j = 0; j < bands[i].length; j++) {
+          tot[j] = (tot[j] || 0) + bands[i][j]; //Initialize the sum to that value to 0
+        }
+      }
+    }
+    tot = this.normalize(tot);
     //NOTE The quantity returned is an array
-    return bands;
+    return tot;
   }
 
   //Used to copy the spectra of a sound for polyphonic purposes (CHORDS)
   copySound(waves) {}
+
+  //Used to normalize the spectra with more oscillators
+  normalize(bands) {
+    const max = Math.max(...bands, 0.001);
+    return bands.map((v) => v / max);
+  }
+
+  setHarmonics(val) {
+    this.harmonics = val;
+  }
+
+  getHarmonics() {
+    if (harmonics != null) {
+      return this.harmonics;
+    } else {
+      return null;
+    }
+  }
 }

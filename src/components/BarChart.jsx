@@ -1,25 +1,29 @@
 import { Box, Typography } from "@mui/material";
 
-function BarChart({ 
-  values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+function BarChart({
+  values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
   height = 200,
-  title = "Bar Chart"
+  title = "Bar Chart",
 }) {
   // Find the maximum value for scaling
   const maxValue = Math.max(...values, 1); // Ensure at least 1 to avoid division by zero
-  
+
   // Scale values so the max reaches 100% of container height
-  const scaledValues = values.map(value => (value / maxValue));
+  const scaledValues = values.map((value) => value / maxValue);
 
   return (
     <Box>
       {title && (
-        <Typography variant="h6" gutterBottom sx={{ mb: 1, textAlign: "center" }}>
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ mb: 1, textAlign: "center" }}
+        >
           {title}
         </Typography>
       )}
-      
+
       <Box
         sx={{
           display: "flex",
@@ -35,7 +39,7 @@ function BarChart({
       >
         {values.map((value, index) => {
           const heightPercentage = scaledValues[index] * 100;
-          
+
           return (
             <Box
               key={index}
@@ -64,8 +68,20 @@ function BarChart({
                     width: "100%",
                     height: `${heightPercentage}%`,
                     background: `linear-gradient(180deg, 
-                      ${heightPercentage > 70 ? "#f44336" : heightPercentage > 50 ? "#ff9800" : "#667eea"} 0%, 
-                      ${heightPercentage > 70 ? "#d32f2f" : heightPercentage > 50 ? "#f57c00" : "#764ba2"} 100%)`,
+                      ${
+                        heightPercentage > 70
+                          ? "#f44336"
+                          : heightPercentage > 50
+                          ? "#ff9800"
+                          : "#667eea"
+                      } 0%, 
+                      ${
+                        heightPercentage > 70
+                          ? "#d32f2f"
+                          : heightPercentage > 50
+                          ? "#f57c00"
+                          : "#764ba2"
+                      } 100%)`,
                     borderRadius: "4px 4px 0 0",
                     transition: "height 0.3s ease, background 0.3s ease",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
@@ -91,7 +107,6 @@ function BarChart({
       </Box>
 
       {/* Legend */}
-
     </Box>
   );
 }
