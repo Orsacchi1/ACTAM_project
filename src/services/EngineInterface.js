@@ -119,6 +119,24 @@ export default class EngineInterface {
     console.log(`Setting reverb amount to: ${amount}`);
   }
 
+  /**
+   * Set the damping type for harmonic generation
+   * @param {string} type - Possible values: "linear", "quadratic", "exponential"
+   */
+  setDampingType(type) {
+    // TODO: Implementation for setting damping type
+    console.log(`Setting damping type to: ${type}`);
+  }
+
+  /**
+   * Set the spectral amplitude quality for harmonic generation
+   * @param {string} quality - Possible values: "random", "cluster", "none"
+   */
+  setSpectralQuality(quality) {
+    // TODO: Implementation for setting spectral quality
+    console.log(`Setting spectral quality to: ${quality}`);
+  }
+
   setPartitions() {
     // Assicurati AudioContext attivo
     if (this.audioCon.state === "suspended") {
