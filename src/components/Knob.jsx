@@ -8,6 +8,7 @@ function Knob({
   onChange,
   label = "",
   step = 0.1,
+  disabled = false,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
@@ -29,6 +30,7 @@ function Knob({
   const displayWidth = Math.max(maxDisplayText.length * 7 + 8, 32); // ~7px per character + padding
 
   const handleMouseDown = (e) => {
+    if (disabled) return;
     e.preventDefault();
     setIsDragging(true);
     dragStartY.current = e.clientY;
@@ -106,6 +108,8 @@ function Knob({
           alignItems: "center",
           justifyContent: "center",
           paddingBottom: "18px",
+          opacity: disabled ? 0.5 : 1,
+          pointerEvents: disabled ? "none" : "auto",
         }}
       >
         {/* Min Label - Left Side */}
