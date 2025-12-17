@@ -76,6 +76,36 @@ export default class EngineInterface {
     console.log(`Setting envelope release to: ${release}`);
   }
 
+  /**
+   * Enable or disable a specific oscillator
+   * @param {number} index - The oscillator index (1, 2, or 3)
+   * @param {boolean} state - True to enable, false to disable
+   */
+  setOscActive(index, state) {
+    console.log(`Setting Oscillator ${index} active state to: ${state}`);
+    // TODO: Implementation for enabling/disabling oscillator
+  }
+
+  /**
+   * Set the detune amount for a specific oscillator
+   * @param {number} index - The oscillator index (1, 2, or 3)
+   * @param {number} amount - Detune amount (0.0 to 1.0)
+   */
+  setOscDetune(index, amount) {
+    console.log(`Setting Oscillator ${index} detune to: ${amount}`);
+    // TODO: Implementation for setting oscillator detune
+  }
+
+  /**
+   * Set the volume level for a specific oscillator
+   * @param {number} index - The oscillator index (1, 2, or 3)
+   * @param {number} volume - Volume level (0.0 to 1.0)
+   */
+  setOscVolume(index, volume) {
+    console.log(`Setting Oscillator ${index} volume to: ${volume}`);
+    // TODO: Implementation for setting oscillator volume
+  }
+
   setFiltersHiCut(freq) {
     // TODO: Implementation for setting filters hi-cut frequency
     this.HI_PASS.frequency.value = freq;
