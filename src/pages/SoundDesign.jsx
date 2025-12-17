@@ -242,12 +242,12 @@ function SoundDesign({ soundEngine = null }) {
   // Delay handlers (l2a, l2b)
   const handleL2aChange = (value) => {
     setL2a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setDelayTime(value);
   };
 
   const handleL2bChange = (value) => {
     setL2b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setDelayMix(value);
   };
 
   // Reverb handlers (l3a, l3b)
@@ -258,18 +258,18 @@ function SoundDesign({ soundEngine = null }) {
 
   const handleL3bChange = (value) => {
     setL3b(value);
-    soundEngine.setReverbAmount(value);
+    soundEngine.setReverbMix(value);
   };
 
   // Gain handlers (l4a, l4b)
   const handleL4aChange = (value) => {
     setL4a(value);
-    // TODO: Add GainIn logic here
+    soundEngine.setGainIn(value);
   };
 
   const handleL4bChange = (value) => {
     setL4b(value);
-    // TODO: Add GainOut logic here
+    soundEngine.setGainOut(value);
   };
 
   // Envelope handlers (r1a, r1b, r1c, r1d)
