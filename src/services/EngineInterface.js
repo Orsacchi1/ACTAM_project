@@ -114,9 +114,47 @@ export default class EngineInterface {
     console.log(`Setting reverb decay time to: ${time}`);
   }
 
-  setReverbAmount(amount) {
+  setReverbMix(amount) {
     // TODO: Implementation for setting reverb amount
     console.log(`Setting reverb amount to: ${amount}`);
+  }
+
+  setDelayTime(time) {
+    // TODO: Implementation for setting delay time
+    console.log(`Setting delay time to: ${time}`);
+  }
+
+  setDelayMix(amount) {
+    // TODO: Implementation for setting delay mix
+    console.log(`Setting delay mix to: ${amount}`);
+  }
+
+  setGainIn(amount) {
+    // TODO: Implementation for setting gain in
+    console.log(`Setting gain in to: ${amount}`);
+  }
+
+  setGainOut(amount) {
+    // TODO: Implementation for setting gain out
+    console.log(`Setting gain out to: ${amount}`);
+  }
+
+  /**
+   * Set the damping type for harmonic generation
+   * @param {string} type - Possible values: "linear", "quadratic", "exponential"
+   */
+  setDampingType(type) {
+    // TODO: Implementation for setting damping type
+    console.log(`Setting damping type to: ${type}`);
+  }
+
+  /**
+   * Set the spectral amplitude quality for harmonic generation
+   * @param {string} quality - Possible values: "random", "cluster", "none"
+   */
+  setSpectralQuality(quality) {
+    // TODO: Implementation for setting spectral quality
+    console.log(`Setting spectral quality to: ${quality}`);
   }
 
   setPartitions() {

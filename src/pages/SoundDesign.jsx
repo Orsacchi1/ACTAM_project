@@ -1,4 +1,13 @@
-import { Container, Typography, Box, Paper, Button } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Button,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
 import SpectrumCurve from "../components/SpectrumCurve";
@@ -42,26 +51,26 @@ const KNOB_CONFIG = [
       {
         id: "l1a",
         label: "Hi-Cut",
-        min: 20,
-        max: 20000,
+        min: 0,
+        max: 22050,
         step: 1,
         default: 5000,
       },
       {
         id: "l1b",
         label: "Lo-Cut",
-        min: 20,
-        max: 20000,
+        min: 0,
+        max: 22050,
         step: 1,
         default: 5000,
       },
       {
         id: "l1c",
-        label: "Res",
-        min: 20,
-        max: 20000,
-        step: 1,
-        default: 5000,
+        label: "Resonance",
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 0.5,
       },
     ],
   },
@@ -195,6 +204,12 @@ function SoundDesign({ soundEngine = null }) {
   const [r1c, setR1c] = useState(KNOB_CONFIG[4].knobs[2].default);
   const [r1d, setR1d] = useState(KNOB_CONFIG[4].knobs[3].default);
 
+  // Damping Type - single selection (linear, quadratic, exponential)
+  const [dampingType, setDampingType] = useState("linear");
+
+  // Spectral amplitude quality - single selection (random, cluster, none)
+  const [spectralQuality, setSpectralQuality] = useState("none");
+
   // Wavetable (WT) - 128 harmonics
   const [harmonics, setHarmonics] = useState(() => {
     const data = new Float32Array(128);
@@ -207,7 +222,7 @@ function SoundDesign({ soundEngine = null }) {
   // Handler functions for knobs
   // IMPORTANT: Use the 'value' parameter (not the state variable) for audio engine updates
   // to ensure you're using the latest value, as React state updates are asynchronous
-  
+
   // Filters handlers (l1a, l1b, l1c)
   const handleL1aChange = (value) => {
     setL1a(value);
@@ -227,12 +242,12 @@ function SoundDesign({ soundEngine = null }) {
   // Delay handlers (l2a, l2b)
   const handleL2aChange = (value) => {
     setL2a(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setDelayTime(value);
   };
 
   const handleL2bChange = (value) => {
     setL2b(value);
-    // TODO: Add audio engine update logic here using 'value' parameter
+    soundEngine.setDelayMix(value);
   };
 
   // Reverb handlers (l3a, l3b)
@@ -243,18 +258,18 @@ function SoundDesign({ soundEngine = null }) {
 
   const handleL3bChange = (value) => {
     setL3b(value);
-    soundEngine.setReverbAmount(value);
+    soundEngine.setReverbMix(value);
   };
 
   // Gain handlers (l4a, l4b)
   const handleL4aChange = (value) => {
     setL4a(value);
-    // TODO: Add GainIn logic here
+    soundEngine.setGainIn(value);
   };
 
   const handleL4bChange = (value) => {
     setL4b(value);
-    // TODO: Add GainOut logic here
+    soundEngine.setGainOut(value);
   };
 
   // Envelope handlers (r1a, r1b, r1c, r1d)
@@ -276,6 +291,20 @@ function SoundDesign({ soundEngine = null }) {
   const handleR1dChange = (value) => {
     setR1d(value);
     soundEngine.setEnvelopeRelease(value);
+  };
+
+  // Damping Type handler
+  const handleDampingTypeChange = (event) => {
+    const newType = event.target.value;
+    setDampingType(newType);
+    soundEngine.setDampingType(newType);
+  };
+
+  // Spectral amplitude quality handler
+  const handleSpectralQualityChange = (event) => {
+    const newQuality = event.target.value;
+    setSpectralQuality(newQuality);
+    soundEngine.setSpectralQuality(newQuality);
   };
 
   const handleSave = () => {
@@ -326,7 +355,49 @@ function SoundDesign({ soundEngine = null }) {
               minWidth: 0,
             }}
           >
-            {/* Row 1 - Hi Cut Filter */}
+            {/* Row 0 - Damping Type */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: "grey.50",
+                border: "1px solid",
+                borderColor: "grey.200",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
+                Damping Type
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <RadioGroup
+                  row
+                  value={dampingType}
+                  onChange={handleDampingTypeChange}
+                >
+                  <FormControlLabel
+                    value="linear"
+                    control={<Radio />}
+                    label="Linear"
+                  />
+                  <FormControlLabel
+                    value="quadratic"
+                    control={<Radio />}
+                    label="Quadratic"
+                  />
+                  <FormControlLabel
+                    value="exponential"
+                    control={<Radio />}
+                    label="Exponential"
+                  />
+                </RadioGroup>
+              </Box>
+            </Paper>
+
+            {/* Row 1 - Filters */}
             <Paper
               elevation={0}
               sx={{
@@ -521,6 +592,48 @@ function SoundDesign({ soundEngine = null }) {
               minWidth: 0,
             }}
           >
+            {/* Row 0 - Spectral amplitude quality */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: "grey.50",
+                border: "1px solid",
+                borderColor: "grey.200",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
+                Spectral amplitude quality
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <RadioGroup
+                  row
+                  value={spectralQuality}
+                  onChange={handleSpectralQualityChange}
+                >
+                  <FormControlLabel
+                    value="random"
+                    control={<Radio />}
+                    label="Random filtering"
+                  />
+                  <FormControlLabel
+                    value="cluster"
+                    control={<Radio />}
+                    label="Cluster harmonics"
+                  />
+                  <FormControlLabel
+                    value="none"
+                    control={<Radio />}
+                    label="None"
+                  />
+                </RadioGroup>
+              </Box>
+            </Paper>
+
             {/* Row 1 - ENV (4 Knobs) */}
             <Paper
               elevation={0}
@@ -595,7 +708,7 @@ function SoundDesign({ soundEngine = null }) {
                 <SpectrumCurve
                   data={harmonics}
                   width={600}
-                  height={200}
+                  height={132}
                   lineColor="#9c27b0"
                   lineWidth={2}
                   fillColor="rgba(156, 39, 176, 0.1)"
