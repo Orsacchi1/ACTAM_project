@@ -41,9 +41,9 @@
 - [ ] Initialize the position of the knowbs according to the values of the filters (already defined) and the effects (TBD)
 - [x] Fix the Bar Chart in order to contain 128 values
 - [x] The filters have just 2 knobs: Delay (mix, time) Reverb (mix, decay)
-- [ ] Create a group of 3 buttons for the damp type (linear, quadratic, exponential)
-- [ ] Create a group of 2 buttons for the amplitude quality (Random filtering, cluster harmonics, none)
-- [ ] (eventually) Create a group of 3 oscillators, each one has 2 knobs (detune and volume) and a button (selected)
+- [x] Create a group of 3 buttons for the damp type (linear, quadratic, exponential)
+- [x] Create a group of 2 buttons for the amplitude quality (Random filtering, cluster harmonics, none)
+- [x] (eventually) Create a group of 3 oscillators, each one has 2 knobs (detune and volume) and a button (selected)
 
 # VALUE
 
