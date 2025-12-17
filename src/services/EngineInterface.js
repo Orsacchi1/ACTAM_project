@@ -92,19 +92,9 @@ export default class EngineInterface {
     console.log(`Setting filters lo-cut frequency to: ${freq}`);
   }
 
-  getFiltersLoCut() {
-    return this.LO_PASS.frequency.value;
-  }
-
   setFiltersRes(res) {
     // TODO: Implementation for setting filters resonance frequency
-    this.HI_PASS.Q.value = res;
-    this.LO_PASS.Q.value = res;
     console.log(`Setting filters resonance frequency to: ${res}`);
-  }
-
-  getFiltersRes() {
-    return this.HI_PASS.Q.value;
   }
 
   // TODO: There should be more methods here to set other parameters.
@@ -114,9 +104,29 @@ export default class EngineInterface {
     console.log(`Setting reverb decay time to: ${time}`);
   }
 
-  setReverbAmount(amount) {
+  setReverbMix(amount) {
     // TODO: Implementation for setting reverb amount
     console.log(`Setting reverb amount to: ${amount}`);
+  }
+
+  setDelayTime(time) {
+    // TODO: Implementation for setting delay time
+    console.log(`Setting delay time to: ${time}`);
+  }
+
+  setDelayMix(amount) {
+    // TODO: Implementation for setting delay mix
+    console.log(`Setting delay mix to: ${amount}`);
+  }
+
+  setGainIn(amount) {
+    // TODO: Implementation for setting gain in
+    console.log(`Setting gain in to: ${amount}`);
+  }
+
+  setGainOut(amount) {
+    // TODO: Implementation for setting gain out
+    console.log(`Setting gain out to: ${amount}`);
   }
 
   /**
