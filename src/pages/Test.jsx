@@ -5,6 +5,8 @@ import {
   Paper,
   Divider,
   Button,
+  TextField,
+  Grid,
 } from "@mui/material";
 import { useState } from "react";
 import { Refresh } from "@mui/icons-material";
@@ -29,6 +31,19 @@ function Test({ soundEngine = null }) {
 
   const [spectrumData, setSpectrumData] = useState(generateSpectrumData());
 
+  // Engine Interface Test States
+  const [noteFreq, setNoteFreq] = useState(440);
+  const [noteDur, setNoteDur] = useState(1000);
+  const [chordFreqs, setChordFreqs] = useState([261.63, 329.63, 392.0, 523.25]);
+  const [chordDur, setChordDur] = useState(1000);
+  const [manualNoteFreq, setManualNoteFreq] = useState(440);
+
+  const handleChordFreqChange = (index, value) => {
+    const newFreqs = [...chordFreqs];
+    newFreqs[index] = parseFloat(value);
+    setChordFreqs(newFreqs);
+  };
+
   // Code block styling with syntax highlighting colors
   const codeBlockStyle = {
     backgroundColor: "#1e1e1e",
@@ -47,6 +62,147 @@ function Test({ soundEngine = null }) {
       <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
         Test Page - Component Documentation
       </Typography>
+
+      {/* Engine Interface Tests */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Engine Interface Tests
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Play Note with Duration */}
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Play Note with Duration
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              PLAY: <code>playNoteWithDuration(frequency, duration)</code>
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 2 }}>
+              <TextField
+                label="Frequency (Hz)"
+                type="number"
+                value={noteFreq}
+                onChange={(e) => setNoteFreq(Number(e.target.value))}
+                size="small"
+              />
+              <TextField
+                label="Duration (ms)"
+                type="number"
+                value={noteDur}
+                onChange={(e) => setNoteDur(Number(e.target.value))}
+                size="small"
+              />
+              <Button
+                variant="contained"
+                onClick={() =>
+                  soundEngine?.playNoteWithDuration(noteFreq, noteDur)
+                }
+              >
+                Play
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Play Chord with Duration */}
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Play Chord with Duration
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              PLAY CHORD:{" "}
+              <code>playChordWithDuration([f1, f2, f3, f4], duration)</code>
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              {chordFreqs.map((freq, index) => (
+                <TextField
+                  key={index}
+                  label={`Freq ${index + 1}`}
+                  type="number"
+                  value={freq}
+                  onChange={(e) => handleChordFreqChange(index, e.target.value)}
+                  size="small"
+                  sx={{ width: "120px" }}
+                />
+              ))}
+            </Box>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <TextField
+                label="Duration (ms)"
+                type="number"
+                value={chordDur}
+                onChange={(e) => setChordDur(Number(e.target.value))}
+                size="small"
+              />
+              <Button
+                variant="contained"
+                onClick={() =>
+                  soundEngine?.playChordWithDuration(chordFreqs, chordDur)
+                }
+              >
+                Play Chord
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Manual Note Control */}
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Manual Note Control
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Mouse Down: <code>playNote(frequency)</code>
+              <br />
+              Mouse Up/Leave: <code>releaseNote()</code>
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <TextField
+                label="Frequency (Hz)"
+                type="number"
+                value={manualNoteFreq}
+                onChange={(e) => setManualNoteFreq(Number(e.target.value))}
+                size="small"
+              />
+              <Button
+                variant="contained"
+                color="success"
+                onMouseDown={() => soundEngine?.playNote(manualNoteFreq)}
+                onMouseUp={() => soundEngine?.releaseNote()}
+                onMouseLeave={() => soundEngine?.releaseNote()}
+              >
+                Hold to Play
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Global Controls */}
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Global Controls
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              STOP ALL SOUNDS: <code>stopSound()</code> | PLAY TEST NOTE:{" "}
+              <code>playTestNote()</code>
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => soundEngine?.stopSound()}
+              >
+                Stop All Sounds
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => soundEngine?.playTestNote()}
+              >
+                Play Test Note
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Knob Demo */}
       <Paper elevation={3} sx={{ p: 4, mb: 3 }}>
