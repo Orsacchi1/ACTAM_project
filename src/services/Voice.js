@@ -154,4 +154,20 @@ export class Voice {
       return null;
     }
   }
+  /*
+  setDetune(index, val){
+    switch (index){
+      case 0:
+        this.OSC1.detune.value = val;
+        break;
+      case 1:
+        this.OSC2.detune.value = val;
+        break;
+      case 2:
+        this.OSC3.detune.value = val;
+        break;
+    }
+
+  }
+    */
 }

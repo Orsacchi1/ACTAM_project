@@ -41,6 +41,7 @@ export default class EngineInterface {
     // Array to store active oscillators for stopping sounds
     this.activeOscillators = [1, 0, 0];
     this.activeGainNodes = [1, 0, 0];
+    this.detuneArray = [0, 0, 0];
     this.activeVoices = [1, 0, 0, 0]; //Don't know if I'll use them
 
     this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
@@ -51,29 +52,33 @@ export default class EngineInterface {
     console.log("AudioCon:", this.audioCon);
     //Pass the audio context and connect the voice to the envelope
     this.voices[0] = new Voice(this.audioCon, this.ENV);
+    //Just to be sure
+    this.VOICE1.start();
   }
 
   setEnvelopeAttack(attack) {
     // Example method to set envelope attack
-    this.envelope_attack = attack;
+    this.a = attack;
     // TODO: Implementation for setting envelope attack
-
-    console.log(`Envelope attack set to: ${this.envelope_attack}`);
+    console.log(`Envelope attack set to: ${this.a}`);
   }
 
   setEnvelopeDecay(decay) {
     // TODO: Implementation for setting envelope decay
-    console.log(`Setting envelope decay to: ${decay}`);
+    this.d = decay;
+    console.log(`Setting envelope decay to: ${this.d}`);
   }
 
   setEnvelopeSustain(sustain) {
     // TODO: Implementation for setting envelope sustain
-    console.log(`Setting envelope sustain to: ${sustain}`);
+    this.s = sustain;
+    console.log(`Setting envelope sustain to: ${this.s}`);
   }
 
   setEnvelopeRelease(release) {
     // TODO: Implementation for setting envelope release
-    console.log(`Setting envelope release to: ${release}`);
+    this.r = release;
+    console.log(`Setting envelope release to: ${r}`);
   }
 
   /**
@@ -84,6 +89,13 @@ export default class EngineInterface {
   setOscActive(index, state) {
     console.log(`Setting Oscillator ${index} active state to: ${state}`);
     // TODO: Implementation for enabling/disabling oscillator
+    if (state == "true") {
+      this.activeOscillators[index - 1] = 1;
+      this.activeGainNodes[index - 1] = 1;
+    } else {
+      this.activeOscillators[index - 1] = 0;
+      this.activeGainNodes[index - 1] = 0;
+    }
   }
 
   /**
@@ -94,6 +106,12 @@ export default class EngineInterface {
   setOscDetune(index, amount) {
     console.log(`Setting Oscillator ${index} detune to: ${amount}`);
     // TODO: Implementation for setting oscillator detune
+    const minCents = -1200;
+    const maxCents = 1200;
+    const res = amount * (maxCents - minCents) + maxCents;
+    //Find a way to set those values
+    //this.voices[0].setDetune(index-1, res);
+    this.detuneArray[index - 1] = res;
   }
 
   /**
@@ -103,13 +121,19 @@ export default class EngineInterface {
    */
   setOscVolume(index, volume) {
     console.log(`Setting Oscillator ${index} volume to: ${volume}`);
+
     // TODO: Implementation for setting oscillator volume
   }
 
   setFiltersHiCut(freq) {
     // TODO: Implementation for setting filters hi-cut frequency
+    const minVal = 20; // Min audible
+    const maxVal = 22050;
+    const normVal = freq / maxVal;
+    freq = minVal * Math.pow(maxVal / minVal, normVal);
     this.HI_PASS.frequency.value = freq;
     console.log(`Setting filters hi-cut frequency to: ${freq}`);
+    return freq;
   }
 
   getFiltersHiCut() {
@@ -118,12 +142,24 @@ export default class EngineInterface {
 
   setFiltersLoCut(freq) {
     // TODO: Implementation for setting filters lo-cut frequency
+    const minVal = 20; // Min audible
+    const maxVal = 22050;
+    const normVal = freq / maxVal;
+    freq = minVal * Math.pow(maxVal / minVal, normVal);
     this.LO_PASS.frequency.value = freq;
     console.log(`Setting filters lo-cut frequency to: ${freq}`);
   }
 
+  getFiltersLoCut() {
+    return this.LO_PASS.frequency.value;
+  }
+
   setFiltersRes(res) {
     // TODO: Implementation for setting filters resonance frequency
+    const maxRes = 20;
+    res = res * maxRes;
+    this.HI_PASS.Q.value = res;
+    this.LO_PASS.Q.value = res;
     console.log(`Setting filters resonance frequency to: ${res}`);
   }
 
@@ -151,11 +187,13 @@ export default class EngineInterface {
 
   setGainIn(amount) {
     // TODO: Implementation for setting gain in
+    this.GAIN_IN.gain.value = amount;
     console.log(`Setting gain in to: ${amount}`);
   }
 
   setGainOut(amount) {
     // TODO: Implementation for setting gain out
+    this.GAIN_OUT.gain.value = amount;
     console.log(`Setting gain out to: ${amount}`);
   }
 
@@ -165,6 +203,17 @@ export default class EngineInterface {
    */
   setDampingType(type) {
     // TODO: Implementation for setting damping type
+    switch (type) {
+      case "linear":
+        this.dampType = 0;
+        break;
+      case "quadratic":
+        this.dampType = 1;
+        break;
+      case "exponential":
+        this.dampType = 2;
+        break;
+    }
     console.log(`Setting damping type to: ${type}`);
   }
 
@@ -174,17 +223,33 @@ export default class EngineInterface {
    */
   setSpectralQuality(quality) {
     // TODO: Implementation for setting spectral quality
+    switch (quality) {
+      case "random":
+        this.randFilt = 1;
+        this.cluster = 0;
+        break;
+      case "cluster":
+        this.randFilt = 0;
+        this.cluster = 1;
+        break;
+      case "none":
+        this.randFilt = 0;
+        this.cluster = 0;
+    }
     console.log(`Setting spectral quality to: ${quality}`);
   }
 
   setPartitions() {
-    // Assicurati AudioContext attivo
+    this.VOICE1.stop();
+    this.VOICE1 = this.audioCon.createOscillator();
+    this.VOICE1.connect(this.ENV);
+    // Make sure audio context is active
     if (this.audioCon.state === "suspended") {
       this.audioCon.resume();
       console.log("Audio Context resumed...");
     }
 
-    // Inizializza activeOscillators se necessario
+    // Initialize active Oscillators if necessary
     if (!Array.isArray(this.activeOscillators)) {
       this.activeOscillators = [1, 0, 0];
       console.log(
@@ -192,13 +257,19 @@ export default class EngineInterface {
       );
     }
 
-    // Copia sicura
+    // Safe copy
     const actOsc = [...this.activeOscillators];
     console.log("actOsc:", this.activeOscillators);
     //Values passed in soundGeneration
 
     console.log(actOsc);
-    const harmonics = this.voices[0].generateSound(1, 1, 1, 2, actOsc);
+    const harmonics = this.voices[0].generateSound(
+      this.sparse,
+      this.randFilt,
+      this.cluster,
+      this.dampType,
+      actOsc
+    );
     //Save the spectra into voices
     this.voices[0].setHarmonics(harmonics);
     console.log(harmonics.length, harmonics);
@@ -210,6 +281,7 @@ export default class EngineInterface {
       disableNormalization: false,
     });
     this.VOICE1.setPeriodicWave(periodicWave);
+    this.VOICE1.start();
     //console.log(this.voices[0]);
     return harmonics;
   }
@@ -218,10 +290,39 @@ export default class EngineInterface {
     return this.voices[0].getHarmonics;
   }
 
+  generateEnvelope() {
+    const now = this.audioCon.currentTime;
+    const g = this.ENV.gain;
+    // 1. Cancella vecchie programmazioni e ancora il valore al tempo attuale
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    // 2. ATTACK: sale al massimo (1.0)
+    // Usiamo linearRamp per l'attacco per precisione, o exponential per morbidezza
+    g.linearRampToValueAtTime(1.0, now + a);
+    // 3. DECAY: scende al livello di SUSTAIN
+    // Usiamo exponentialRamp perché suona più naturale per il decadimento
+    g.exponentialRampToValueAtTime(s + 0.001, now + a + d);
+  }
+
+  releaseNote() {
+    // if there is an active note, release it
+    // TODO: Implementation for releasing a note
+    console.log("Releasing note");
+    const now = this.audioCon.currentTime;
+    const g = ENV.gain;
+
+    // 4. RELEASE: dal livello attuale (Sustain) torna a zero
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.exponentialRampToValueAtTime(0.001, now + r);
+
+    // Opzionale: fissa lo zero assoluto alla fine (per evitare micro-rumori)
+    g.setValueAtTime(0, now + r + 0.01);
+  }
+
   playNoteWithDuration(frequency, duration) {
     // duration is in milliseconds
     // TODO: Implementation for playing a note at the given frequency
-
     console.log(
       `Playing note at frequency: ${frequency} Hz for duration: ${duration} milliseconds`
     );
@@ -306,12 +407,6 @@ export default class EngineInterface {
     console.log(`Playing note at frequency: ${frequency} Hz`);
   }
 
-  releaseNote() {
-    // if there is an active note, release it
-    // TODO: Implementation for releasing a note
-    console.log("Releasing note");
-  }
-
   stopSound() {
     /* IMPORTANT:
 
@@ -356,13 +451,9 @@ export default class EngineInterface {
 
   playTestNote() {
     console.log("Playing test note");
-    if (this.VOICE1.state === "started") {
-      this.VOICE1.stop();
-    } else {
-      this.VOICE1.frequency.value = 220;
-      this.VOICE1.start();
-    }
-
+    this.VOICE1.frequency.value = 220;
+    this.generateEnvelope();
+    this.releaseNote();
     // This function is used to play a demo melody when click the LISTEN button in Sound Design page
     // TODO: Implementation for playing a test note with current settings
   }
@@ -393,7 +484,7 @@ export default class EngineInterface {
   initGains() {
     this.GAIN_IN.gain.value = 0.8;
     this.GAIN_OUT.gain.value = 0.8;
-    this.ENV.gain.value = 1;
+    this.ENV.gain.value = 0;
   }
 }
 //test
