@@ -6,7 +6,7 @@ export default class EngineInterface {
   static SAMPLE_RATE = 44100;
   static MIN_FREQ = 0;
   static MAX_FREQ = 22050;
-  wetGain = 0.0;
+  wetGainDelay = 0.0;
   wetGainReverb = 0.0;
 
   dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
@@ -34,6 +34,8 @@ export default class EngineInterface {
     this.LO_PASS.type = "lowpass";
     this.VOICE1 = this.audioCon.createOscillator(); // Will be 4 voices in total for all the main tetrachords
     this.ENV = this.audioCon.createGain();
+    this.WETDELAY = this.audioCon.createGain();
+    this.DELAY = this.audioCon.createDelay();
     this.REV = new Tone.Reverb({ decay: 3 }); //Assign the decay here in order to calculate the buffer and start the sound in real time
 
     //---IS IT POSSIBLE TO INITIALIZE ADSR TO A DEFAULT VALUE?---
@@ -46,6 +48,8 @@ export default class EngineInterface {
 
     this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
 
+    this.createDelay();
+    this.createReverb();
     this.setupConnections();
     this.initializeValues();
     console.log("ActiveOsc:", this.activeOscillators);
@@ -78,7 +82,7 @@ export default class EngineInterface {
   setEnvelopeRelease(release) {
     // TODO: Implementation for setting envelope release
     this.r = release;
-    console.log(`Setting envelope release to: ${r}`);
+    console.log(`Setting envelope release to: ${this.r}`);
   }
 
   /**
@@ -181,12 +185,13 @@ export default class EngineInterface {
   }
 
   setDelayTime(time) {
+    this.DELAY.delayTime.value = time;
     // TODO: Implementation for setting delay time
     console.log(`Setting delay time to: ${time}`);
   }
 
   setDelayMix(amount) {
-    // TODO: Implementation for setting delay mix
+    this.WETDELAY.gain.value = amount;
     console.log(`Setting delay mix to: ${amount}`);
   }
 
@@ -295,6 +300,31 @@ export default class EngineInterface {
     return this.voices[0].getHarmonics;
   }
 
+  createDelay(val = 0.0) {
+    const DELAY = this.DELAY;
+    DELAY.delayTime.value = 0.2; //200 ms
+    const FEEDBACK = this.audioCon.createGain();
+    FEEDBACK.gain.value = 0.6; //# repeats
+    const WET = this.WETDELAY;
+    WET.gain.value = val;
+    const DRY = this.audioCon.createGain();
+    DRY.gain.value = 0.8;
+    //Create a closed loop
+    DELAY.connect(FEEDBACK);
+    FEEDBACK.connect(DELAY);
+    this.GAIN_IN.connect(DELAY);
+    this.GAIN_IN.connect(DRY);
+    DELAY.connect(WET);
+    //WET.connect(REV);
+    Tone.connect(WET, this.REV);
+    //DRY.connect(GAIN_OUT);
+    Tone.connect(DRY, this.REV);
+  }
+
+  createReverb(val = 0.0) {
+    this.REV.wet.value = val;
+  }
+
   generateEnvelope() {
     const now = this.audioCon.currentTime;
     const g = this.ENV.gain;
@@ -303,26 +333,28 @@ export default class EngineInterface {
     g.setValueAtTime(g.value, now);
     // 2. ATTACK: sale al massimo (1.0)
     // Usiamo linearRamp per l'attacco per precisione, o exponential per morbidezza
-    g.linearRampToValueAtTime(1.0, now + a);
+    g.linearRampToValueAtTime(1.0, now + this.a);
     // 3. DECAY: scende al livello di SUSTAIN
     // Usiamo exponentialRamp perché suona più naturale per il decadimento
-    g.exponentialRampToValueAtTime(s + 0.001, now + a + d);
+    g.exponentialRampToValueAtTime(this.s + 0.001, now + this.a + this.d);
   }
 
   releaseNote() {
     // if there is an active note, release it
     // TODO: Implementation for releasing a note
+    console.log("audioContext:", this.audioContext);
+    console.log("type:", typeof this.audioContext);
     console.log("Releasing note");
     const now = this.audioCon.currentTime;
-    const g = ENV.gain;
+    const g = this.ENV.gain;
 
     // 4. RELEASE: dal livello attuale (Sustain) torna a zero
     g.cancelScheduledValues(now);
     g.setValueAtTime(g.value, now);
-    g.exponentialRampToValueAtTime(0.001, now + r);
+    g.exponentialRampToValueAtTime(0.001, now + this.r);
 
     // Opzionale: fissa lo zero assoluto alla fine (per evitare micro-rumori)
-    g.setValueAtTime(0, now + r + 0.01);
+    g.setValueAtTime(0, now + this.r + 0.01);
   }
 
   playNoteWithDuration(frequency, duration) {
@@ -409,6 +441,8 @@ export default class EngineInterface {
 
   playNote(frequency) {
     // TODO: Implementation for playing a note at the given frequency
+    this.VOICE1.frequency.value = frequency;
+    this.generateEnvelope();
     console.log(`Playing note at frequency: ${frequency} Hz`);
   }
 
@@ -423,7 +457,7 @@ export default class EngineInterface {
 
     // TODO: Implementation for stopping all sounds
     // You can delete the test implementation below and replace it with actual sound stopping logic.
-
+    /*
     // Stop all active oscillators immediately
     const now = this.audioCon.currentTime;
 
@@ -450,7 +484,8 @@ export default class EngineInterface {
     // Clear arrays
     //this.activeOscillators = [];
     //this.activeGainNodes = [];
-
+*/
+    this.releaseNote();
     console.log("Stopping all sounds");
   }
 
@@ -458,7 +493,7 @@ export default class EngineInterface {
     console.log("Playing test note");
     this.VOICE1.frequency.value = 220;
     this.generateEnvelope();
-    this.releaseNote();
+    setTimeout(() => this.releaseNote(), this.a * 1000 + this.d * 1000 + 2000);
     // This function is used to play a demo melody when click the LISTEN button in Sound Design page
     // TODO: Implementation for playing a test note with current settings
   }
@@ -467,10 +502,10 @@ export default class EngineInterface {
     this.VOICE1.connect(this.ENV)
       .connect(this.LO_PASS)
       .connect(this.HI_PASS)
-      .connect(this.GAIN_IN); //This will connect to the delay later
-    //.connect(this.REV); //This will be erased
-    //Tone.connect(this.REV, this.GAIN_OUT);  BYPASS FOR NOW
-    this.GAIN_IN.connect(this.GAIN_OUT);
+      .connect(this.GAIN_IN);
+    //GainIn is connected to the delay inside the createDelay function
+    Tone.connect(this.REV, this.GAIN_OUT);
+    //this.GAIN_IN.connect(this.GAIN_OUT);
     this.GAIN_OUT.connect(this.audioCon.destination);
   }
 
