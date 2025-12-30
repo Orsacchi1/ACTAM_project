@@ -36,8 +36,11 @@ export default class EngineInterface {
     this.ENV = this.audioCon.createGain();
     this.WETDELAY = this.audioCon.createGain();
     this.DELAY = this.audioCon.createDelay();
-    this.REV = new Tone.Reverb({ decay: 3 }); //Assign the decay here in order to calculate the buffer and start the sound in real time
-
+    //this.REV = new Tone.Reverb({ decay: 3 }); //Assign the decay here in order to calculate the buffer and start the sound in real time
+    this.REV = new Tone.FeedbackDelay({
+      delayTime: 0.03,
+      feedback: 0.5,
+    });
     //---IS IT POSSIBLE TO INITIALIZE ADSR TO A DEFAULT VALUE?---
 
     // Array to store active oscillators for stopping sounds
@@ -55,7 +58,7 @@ export default class EngineInterface {
     console.log("ActiveOsc:", this.activeOscillators);
     console.log("AudioCon:", this.audioCon);
     //Pass the audio context and connect the voice to the envelope
-    this.voices[0] = new Voice(this.audioCon, this.ENV);
+    this.voices[0] = new Voice(this.audioCon, this.ENV); //An array of voices allows for a more complex audio generation
     //Just to be sure
     this.VOICE1.start();
   }
@@ -124,6 +127,7 @@ export default class EngineInterface {
    * @param {number} volume - Volume level (0.0 to 1.0)
    */
   setOscVolume(index, volume) {
+    this.activeGainNodes[index - 1] = volume;
     console.log(`Setting Oscillator ${index} volume to: ${volume}`);
 
     // TODO: Implementation for setting oscillator volume
@@ -171,11 +175,13 @@ export default class EngineInterface {
 
   setReverbDecay(time) {
     // TODO: Implementation for setting reverb decay time
+    this.REV.feedback.rampTo(time, 0.5);
     console.log(`Setting reverb decay time to: ${time}`);
   }
 
   setReverbMix(amount) {
     // TODO: Implementation for setting reverb amount
+    this.REV.wet.value = amount;
     console.log(`Setting reverb amount to: ${amount}`);
   }
 
