@@ -620,7 +620,9 @@ function App() {
       </Drawer>
 
       {/* Page Content */}
-      {currentPage === "chordProgression" && (
+      <Box
+        sx={{ display: currentPage === "chordProgression" ? "block" : "none" }}
+      >
         <ChordProgression
           bpm={bpm}
           setBpm={setBpm}
@@ -644,13 +646,15 @@ function App() {
           setSelectedBeat={setSelectedBeat}
           soundEngine={engineInterface}
         />
-      )}
+      </Box>
 
-      {currentPage === "soundDesign" && (
+      <Box sx={{ display: currentPage === "soundDesign" ? "block" : "none" }}>
         <SoundDesign soundEngine={engineInterface} />
-      )}
+      </Box>
 
-      {currentPage === "test" && <Test soundEngine={engineInterface} />}
+      <Box sx={{ display: currentPage === "test" ? "block" : "none" }}>
+        <Test soundEngine={engineInterface} />
+      </Box>
     </>
   );
 }
