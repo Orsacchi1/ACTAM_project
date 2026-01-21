@@ -48,6 +48,8 @@ export default class EngineInterface {
     this.activeGainNodes = [1, 0, 0];
     this.detuneArray = [0, 0, 0];
     this.activeVoices = [1, 0, 0, 0]; //Don't know if I'll use them
+    this.oscArray = [];
+    this.oscArrayGain = [];
 
     this.generator = Math; //Using Math.random() for now, can be replaced with a better RNG if needed
 
@@ -293,8 +295,31 @@ export default class EngineInterface {
     });
     this.VOICE1.setPeriodicWave(periodicWave);
     this.VOICE1.start();
+    generateOscArray(harmonics);
     //console.log(this.voices[0]);
     return harmonics;
+  }
+
+  //BETA FUNCTION
+  generateOscArray(harmonics) {
+    const imag = new Float32Array(harmonics.length);
+    const real = new Float32Array(harmonics);
+    //Check if the oscillators are already istantiated
+    if (this.oscArray[i] != null) {
+      for (let i = 0; i < 4; i++) {
+        this.oscArray[i].stop();
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      const osc = this.audioCon.createOscillator();
+      const periodicWave = this.audioCon.createPeriodicWave(real, imag, {
+        disableNormalization: false,
+      });
+      osc.setPeriodicWave(periodicWave);
+      osc.connect(this.ENV);
+      osc.start();
+      this.oscArray.push(osc);
+    }
   }
 
   getHarmonics() {
@@ -364,6 +389,8 @@ export default class EngineInterface {
     console.log(
       `Playing note at frequency: ${frequency} Hz for duration: ${duration} milliseconds`
     );
+    this.playNote(frequency);
+    setTimeout(() => this.releaseNote(), duration);
   }
 
   playChordWithDuration(frequencies, duration) {
@@ -380,7 +407,7 @@ export default class EngineInterface {
 
     // duration is in milliseconds
     // chord is an array of frequencies
-
+    /*
     // TEST IMPLEMENTATION: Play a random frequency from the chord as a sine wave
     if (!frequencies || frequencies.length === 0) return;
 
@@ -434,10 +461,11 @@ export default class EngineInterface {
         this.activeGainNodes.splice(gainIndex, 1);
       }
     };
-
+*/
     console.log(
       `Playing chord at frequencies: ${frequencies} Hz for duration: ${duration} milliseconds`
     );
+    //Generate the oscillators for every note
   }
 
   playNote(frequency) {
