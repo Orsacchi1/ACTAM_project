@@ -252,8 +252,33 @@ export default class EngineInterface {
     console.log(`Setting spectral quality to: ${quality}`);
   }
 
+  //BETA FUNCTION
+  generateOscArray(harmonics) {
+    const imag = new Float32Array(harmonics.length);
+    const real = new Float32Array(harmonics.length);
+    real.set(harmonics);
+    this.oscArray.forEach((osc) => osc.stop());
+    this.oscArray = [];
+    //Check if the oscillators are already istantiated
+    if (this.oscArray[0] != null) {
+      for (let i = 0; i < 4; i++) {
+        this.oscArray[i].stop();
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      let osc = this.audioCon.createOscillator();
+      const periodicWave = this.audioCon.createPeriodicWave(real, imag, {
+        disableNormalization: true,
+      });
+      osc.setPeriodicWave(periodicWave);
+      osc.connect(this.ENV);
+      osc.start();
+      this.oscArray.push(osc);
+    }
+  }
+
   setPartitions() {
-    this.VOICE1.stop();
+    //this.VOICE1.stop();
     this.VOICE1 = this.audioCon.createOscillator();
     this.VOICE1.connect(this.ENV);
     // Make sure audio context is active
@@ -294,32 +319,10 @@ export default class EngineInterface {
       disableNormalization: false,
     });
     this.VOICE1.setPeriodicWave(periodicWave);
-    this.VOICE1.start();
-    generateOscArray(harmonics);
+    //this.VOICE1.start();
+    this.generateOscArray(harmonics);
     //console.log(this.voices[0]);
     return harmonics;
-  }
-
-  //BETA FUNCTION
-  generateOscArray(harmonics) {
-    const imag = new Float32Array(harmonics.length);
-    const real = new Float32Array(harmonics);
-    //Check if the oscillators are already istantiated
-    if (this.oscArray[i] != null) {
-      for (let i = 0; i < 4; i++) {
-        this.oscArray[i].stop();
-      }
-    }
-    for (let i = 0; i < 4; i++) {
-      const osc = this.audioCon.createOscillator();
-      const periodicWave = this.audioCon.createPeriodicWave(real, imag, {
-        disableNormalization: false,
-      });
-      osc.setPeriodicWave(periodicWave);
-      osc.connect(this.ENV);
-      osc.start();
-      this.oscArray.push(osc);
-    }
   }
 
   getHarmonics() {
@@ -390,6 +393,7 @@ export default class EngineInterface {
       `Playing note at frequency: ${frequency} Hz for duration: ${duration} milliseconds`
     );
     this.playNote(frequency);
+    this.generateEnvelope();
     setTimeout(() => this.releaseNote(), duration);
   }
 
@@ -466,12 +470,17 @@ export default class EngineInterface {
       `Playing chord at frequencies: ${frequencies} Hz for duration: ${duration} milliseconds`
     );
     //Generate the oscillators for every note
+    for (let i = 0; i < frequencies.length; i++) {
+      this.playNote(this.oscArray[i], frequencies[i]);
+    }
+    this.generateEnvelope();
+    setTimeout(() => this.releaseNote(), duration - this.r * 1000);
   }
 
-  playNote(frequency) {
+  playNote(oscillator, frequency) {
     // TODO: Implementation for playing a note at the given frequency
-    this.VOICE1.frequency.value = frequency;
-    this.generateEnvelope();
+    oscillator.frequency.value = frequency;
+    //this.generateEnvelope();
     console.log(`Playing note at frequency: ${frequency} Hz`);
   }
 
@@ -520,7 +529,9 @@ export default class EngineInterface {
 
   playTestNote() {
     console.log("Playing test note");
-    this.VOICE1.frequency.value = 220;
+    //this.VOICE1.frequency.value = 220;
+    this.oscArray[0].frequency.value = 220;
+    //I have to isolate only one oscillator
     this.generateEnvelope();
     setTimeout(() => this.releaseNote(), this.a * 1000 + this.d * 1000 + 2000);
     // This function is used to play a demo melody when click the LISTEN button in Sound Design page
@@ -554,6 +565,13 @@ export default class EngineInterface {
     this.GAIN_IN.gain.value = 0.8;
     this.GAIN_OUT.gain.value = 0.8;
     this.ENV.gain.value = 0;
+    this.WETDELAY.gain.value = this.wetGainDelay;
+    this.REV.wet.value = this.wetGainReverb;
+  }
+
+  initEffects() {
+    this.REV.delayTime.value = 0.5;
+    this.DELAY.delayTime.value = 0.5;
   }
 }
 //test
