@@ -435,7 +435,7 @@ function SoundDesign({ soundEngine = null }) {
         // Oscillator
         soundEngine.setOscDetune(1, data.aaa);
         soundEngine.setOscVolume(1, data.aab);
-        
+
         // Filters - use handler functions to update both state and display values
         // This ensures display values are calculated even for old preset files
         const hiCutDisplay = soundEngine.setFiltersHiCut(data.baa);
@@ -445,7 +445,7 @@ function SoundDesign({ soundEngine = null }) {
         // Use loaded display values if available, otherwise use calculated ones
         setBaaDisplay(data.baaDisplay ?? hiCutDisplay);
         setBabDisplay(data.babDisplay ?? loCutDisplay);
-        
+
         soundEngine.setFiltersRes(data.bac);
         // Envelope
         soundEngine.setEnvelopeAttack(data.bba);
