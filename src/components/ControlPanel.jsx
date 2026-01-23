@@ -1,5 +1,13 @@
 import { Button, TextField, Paper, Stack, Typography } from "@mui/material";
-import { PlayArrow, Stop, Replay, Refresh, Add } from "@mui/icons-material";
+import {
+  PlayArrow,
+  Stop,
+  Replay,
+  Refresh,
+  Add,
+  FileDownload,
+  FileUpload,
+} from "@mui/icons-material";
 
 function ControlPanel({
   isPlaying,
@@ -13,9 +21,24 @@ function ControlPanel({
   onAddMeasure,
   beatsPerMeasure,
   setBeatsPerMeasure,
+  onExport,
+  onImport,
 }) {
+  const handleImportClick = () => {
+    document.getElementById("import-file-input").click();
+  };
+
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      {/* Hidden file input */}
+      <input
+        id="import-file-input"
+        type="file"
+        accept=".json"
+        onChange={onImport}
+        style={{ display: "none" }}
+      />
+
       <Stack
         direction="row"
         spacing={2}
@@ -88,6 +111,26 @@ function ControlPanel({
           startIcon={<Add />}
         >
           Add Measure
+        </Button>
+
+        <Button
+          variant="outlined"
+          color="success"
+          onClick={onExport}
+          startIcon={<FileDownload />}
+          title="Export chord progression to JSON file"
+        >
+          Export
+        </Button>
+
+        <Button
+          variant="outlined"
+          color="info"
+          onClick={handleImportClick}
+          startIcon={<FileUpload />}
+          title="Import chord progression from JSON file"
+        >
+          Import
         </Button>
 
         <Typography variant="body2" color="text.secondary">

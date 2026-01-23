@@ -15,6 +15,7 @@ import SoundDesign from "./pages/SoundDesign";
 import Test from "./pages/Test";
 import { audioEngine } from "./utils/audioEngine";
 import translate from "./utils/translator";
+import { exportToFile, importFromFile } from "./utils/chordStorage";
 import "./App.css";
 import EngineInterface from "./services/EngineInterface";
 
@@ -50,6 +51,9 @@ function App() {
 
   // Currently selected beat for chord/tempo editing
   const [selectedBeat, setSelectedBeat] = useState(null); // { beatIndex, half }
+
+  // Beats per measure setting
+  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
 
   // Refs for playback intervals
   const intervalRef = useRef(null); // Main beat interval
@@ -173,7 +177,7 @@ function App() {
 
       return duration;
     },
-    [beatChords, beatVelocities, bpm, totalBeats]
+    [beatChords, beatVelocities, bpm, totalBeats],
   );
 
   /**
@@ -201,7 +205,7 @@ function App() {
         }
       }
     },
-    [calculateChordDuration, engineInterface]
+    [calculateChordDuration, engineInterface],
   );
 
   // Keep playChordRef updated with latest playChord function
@@ -520,6 +524,65 @@ function App() {
   };
 
   /**
+   * Export current chord progression to a JSON file
+   */
+  const handleExport = () => {
+    const data = {
+      measures,
+      beatChords,
+      beatVelocities,
+      bpm,
+      beatsPerMeasure,
+    };
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .slice(0, -5);
+    const filename = `chord-progression-${timestamp}`;
+
+    try {
+      exportToFile(data, filename);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export file: " + error.message);
+    }
+  };
+
+  /**
+   * Import chord progression from a JSON file
+   */
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await importFromFile(file);
+
+      // Stop playback if currently playing
+      if (isPlaying) {
+        stopPlay();
+      }
+
+      // Update all states with imported data
+      setMeasures(data.measures);
+      setBeatChords(data.beatChords);
+      setBeatVelocities(data.beatVelocities);
+      setBpm(data.bpm);
+      setBeatsPerMeasure(data.beatsPerMeasure);
+      setCurrentBeat(0);
+
+      console.log("Imported chord progression:", data.metadata);
+    } catch (error) {
+      console.error("Import failed:", error);
+      alert("Failed to import file: " + error.message);
+    }
+
+    // Reset file input
+    event.target.value = "";
+  };
+
+  /**
    * Handle per-beat velocity (tempo) change
    * @param {number} beatIndex - Absolute beat index
    * @param {number|null} velocity - BPM value or null to clear
@@ -645,6 +708,10 @@ function App() {
           handleChordSelect={handleChordSelect}
           setSelectedBeat={setSelectedBeat}
           soundEngine={engineInterface}
+          beatsPerMeasure={beatsPerMeasure}
+          setBeatsPerMeasure={setBeatsPerMeasure}
+          handleExport={handleExport}
+          handleImport={handleImport}
         />
       </Box>
 
