@@ -9,7 +9,7 @@ export default class EngineInterface {
   wetGainDelay = 0.0;
   wetGainReverb = 0.0;
 
-  dampType = 1; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
+  dampType = 0; //Choose the DAMP TYPE [0=Linear, 1=Quadratic, 2=Exp]
   envType = 1; //Choose the type of envelope [0=Normal, 1=Pluck, 2=Pad]
   sparse = 1; //Flag for the spacing or not
   randFilt = 0; //Has priority on cluster
@@ -296,7 +296,7 @@ export default class EngineInterface {
     if (!Array.isArray(this.activeOscillators)) {
       this.activeOscillators = [1, 0, 0];
       console.log(
-        "activeOscillators array initialized at default values [1, 0, 0]"
+        "activeOscillators array initialized at default values [1, 0, 0]",
       );
     }
 
@@ -311,7 +311,7 @@ export default class EngineInterface {
       this.randFilt,
       this.cluster,
       this.dampType,
-      actOsc
+      actOsc,
     );
     //Save the spectra into voices
     this.voices[0].setHarmonics(harmonics);
@@ -395,7 +395,7 @@ export default class EngineInterface {
     // duration is in milliseconds
     // TODO: Implementation for playing a note at the given frequency
     console.log(
-      `Playing note at frequency: ${frequency} Hz for duration: ${duration} milliseconds`
+      `Playing note at frequency: ${frequency} Hz for duration: ${duration} milliseconds`,
     );
     this.playNote(frequency);
     this.generateEnvelope();
@@ -472,7 +472,7 @@ export default class EngineInterface {
     };
 */
     console.log(
-      `Playing chord at frequencies: ${frequencies} Hz for duration: ${duration} milliseconds`
+      `Playing chord at frequencies: ${frequencies} Hz for duration: ${duration} milliseconds`,
     );
     //Generate the oscillators for every note
     for (let i = 0; i < frequencies.length; i++) {
@@ -557,13 +557,14 @@ export default class EngineInterface {
   initializeValues() {
     this.initFilters();
     this.initGains();
+    this.initEffects();
   }
 
   initFilters() {
     this.LO_PASS.frequency.value = 22050; //Filtered frequency
-    this.LO_PASS.Q.value = 2; //Resonance
+    this.LO_PASS.Q.value = 0; //Resonance
     this.HI_PASS.frequency.value = 0;
-    this.HI_PASS.Q.value = 2;
+    this.HI_PASS.Q.value = 0;
   }
 
   initGains() {

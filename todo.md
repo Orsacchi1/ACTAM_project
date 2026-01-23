@@ -15,7 +15,6 @@
   - Import and Export
 - Effect bank
 - Sound stacks and layers
-
   - How to stack different sounds
   - How to create melodies
   - How to manage different patterns/chords/sounds
@@ -48,8 +47,19 @@
 
 # VALUE
 
-- Filters (hicut-locut): 0-22050
+- Filters (hipass-lopass): 0-22050
 - Amount of effects (delay, reverb): 0-1
 - Resonance: 0-1
 - GainIn, GainOut: 0-1
 - Buttons for damping type and spectral quality (strings)
+
+# INITIAL VALUES
+
+- lopass = 22050
+- hipass = 0
+- resonance = 0
+- gainIn = gainOut = 0.8
+- damping type = linear
+- spectral quality = none
+- mix on effects = 0
+- amount and time = 0.5
