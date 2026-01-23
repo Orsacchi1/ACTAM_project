@@ -26,9 +26,11 @@ function ChordProgression({
   handleVelocitySelect,
   setSelectedBeat,
   soundEngine = null,
+  beatsPerMeasure,
+  setBeatsPerMeasure,
+  handleExport,
+  handleImport,
 }) {
-  const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
-
   // Adapter function for ChordSelector's onBeatBpmChange
   // ChordSelector passes (beatIndex, half, value) but we only need (beatIndex, value)
   const handleBeatBpmChange = (beatIndex, _half, value) => {
@@ -60,6 +62,8 @@ function ChordProgression({
         onBpmChange={handleBpmChange}
         beatsPerMeasure={beatsPerMeasure}
         setBeatsPerMeasure={setBeatsPerMeasure}
+        onExport={handleExport}
+        onImport={handleImport}
       />
 
       {/* Timeline */}

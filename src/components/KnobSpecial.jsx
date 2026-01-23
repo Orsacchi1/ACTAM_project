@@ -9,10 +9,13 @@ function KnobSpecial({
   label = "",
   step = 0.1,
   disabled = false,
+  initialDisplayValue = null,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const [displayValue, setDisplayValue] = useState(value);
+  const [displayValue, setDisplayValue] = useState(
+    initialDisplayValue !== null ? initialDisplayValue : value,
+  );
   const knobRef = useRef(null);
   const dragStartY = useRef(0);
   const dragStartValue = useRef(0);
@@ -78,9 +81,15 @@ function KnobSpecial({
     };
   }, [isDragging, min, max, onChange, step]);
 
+  // Update when props change - prop synchronization pattern
   useEffect(() => {
     setCurrentValue(value);
-  }, [value]);
+    if (initialDisplayValue !== null) {
+      setDisplayValue(initialDisplayValue);
+    } else {
+      setDisplayValue(value);
+    }
+  }, [value, initialDisplayValue]);
 
   return (
     <Box
