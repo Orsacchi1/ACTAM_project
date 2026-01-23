@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import Knob from "../components/Knob";
+import KnobSpecial from "../components/KnobSpecial";
 import SpectrumCurve from "../components/SpectrumCurve";
 import EngineInterface from "../services/EngineInterface";
 
@@ -121,7 +122,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 22050,
         step: 1,
-        default: 5000,
+        default: 22050,
       },
       {
         id: "bab",
@@ -129,7 +130,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 22050,
         step: 1,
-        default: 5000,
+        default: 0,
       },
       {
         id: "bac",
@@ -137,7 +138,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 1,
         step: 0.01,
-        default: 0.5,
+        default: 0,
       },
     ],
   },
@@ -197,7 +198,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 1,
         step: 0.01,
-        default: 0.5,
+        default: 0,
       },
     ],
   },
@@ -219,7 +220,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 1,
         step: 0.01,
-        default: 0.5,
+        default: 0,
       },
     ],
   },
@@ -233,7 +234,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 1,
         step: 0.01,
-        default: 0.5,
+        default: 0.8,
       },
       {
         id: "ccb",
@@ -241,7 +242,7 @@ const KNOB_CONFIG = [
         min: 0,
         max: 1,
         step: 0.01,
-        default: 0.5,
+        default: 0.8,
       },
     ],
   },
@@ -355,12 +356,12 @@ function SoundDesign({ soundEngine = null }) {
   // Filters handlers (baa, bab, bac)
   const handleBaaChange = (value) => {
     setBaa(value);
-    soundEngine.setFiltersHiCut(value);
+    return soundEngine?.setFiltersHiCut(value);
   };
 
   const handleBabChange = (value) => {
     setBab(value);
-    soundEngine.setFiltersLoCut(value);
+    return soundEngine?.setFiltersLoCut(value);
   };
 
   const handleBacChange = (value) => {
@@ -712,7 +713,7 @@ function SoundDesign({ soundEngine = null }) {
                 {KNOB_CONFIG[3].title}
               </Typography>
               <Box sx={{ display: "flex", gap: 4, justifyContent: "center" }}>
-                <Knob
+                <KnobSpecial
                   label={KNOB_CONFIG[3].knobs[0].label}
                   min={KNOB_CONFIG[3].knobs[0].min}
                   max={KNOB_CONFIG[3].knobs[0].max}
@@ -720,7 +721,7 @@ function SoundDesign({ soundEngine = null }) {
                   value={baa}
                   onChange={handleBaaChange}
                 />
-                <Knob
+                <KnobSpecial
                   label={KNOB_CONFIG[3].knobs[1].label}
                   min={KNOB_CONFIG[3].knobs[1].min}
                   max={KNOB_CONFIG[3].knobs[1].max}
