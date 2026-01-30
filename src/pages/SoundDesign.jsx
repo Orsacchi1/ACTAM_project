@@ -75,19 +75,19 @@ const KNOB_CONFIG = [
     knobs: [
       {
         id: "baa",
-        label: "Hi-Cut",
-        min: 0,
-        max: 22050,
-        step: 1,
-        default: 22050,
-      },
-      {
-        id: "bab",
-        label: "Lo-Cut",
+        label: "Hi-Pass",
         min: 0,
         max: 22050,
         step: 1,
         default: 0,
+      },
+      {
+        id: "bab",
+        label: "Lo-Pass",
+        min: 0,
+        max: 22050,
+        step: 1,
+        default: 22050,
       },
       {
         id: "bac",
