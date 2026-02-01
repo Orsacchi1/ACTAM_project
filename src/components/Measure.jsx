@@ -60,14 +60,11 @@ function Measure({
           onClick={() => onDeleteMeasure(measureIndex)}
           disabled={isPlaying}
           sx={{
-            padding: 0,
             width: 16,
             height: 16,
             color: "error.main",
-            opacity: isPlaying ? 0.4 : 1,
             "&:hover": {
               backgroundColor: isPlaying ? "transparent" : "error.light",
-              color: isPlaying ? "error.main" : "error.dark",
             },
           }}
         >
@@ -117,20 +114,6 @@ function Measure({
           return (
             <Box
               key={beatInMeasure}
-              onClick={() => {
-                const newVelocity = prompt(
-                  `Set tempo for beat ${absoluteBeat + 1} (40-240 BPM):`,
-                  velocity || 120
-                );
-                if (newVelocity) {
-                  const vel = parseInt(newVelocity);
-                  if (vel >= 40 && vel <= 240) {
-                    onVelocitySelect(absoluteBeat, vel);
-                  } else {
-                    alert("Tempo must be between 40-240");
-                  }
-                }
-              }}
               sx={{
                 flex: 1,
                 display: "flex",
@@ -184,10 +167,6 @@ function Measure({
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                borderRight:
-                  beatInMeasure < beatsPerMeasure - 1
-                    ? "1px solid #f0f0f0"
-                    : "none",
               }}
             >
               {/* First half chord */}
