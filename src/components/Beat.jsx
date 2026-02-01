@@ -5,7 +5,6 @@ function Beat({
   absoluteBeat,
   currentBeat,
   onClick,
-  chords,
   isPlaying = false,
 }) {
   const isActive = absoluteBeat === currentBeat;

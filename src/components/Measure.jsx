@@ -215,7 +215,6 @@ function Measure({
       <Box sx={{ display: "flex", flex: 1 }}>
         {beats.map((beatInMeasure) => {
           const absoluteBeat = startBeat + beatInMeasure;
-          const chords = beatChords[absoluteBeat];
           return (
             <Beat
               key={beatInMeasure}
@@ -223,7 +222,6 @@ function Measure({
               absoluteBeat={absoluteBeat}
               currentBeat={currentBeat}
               onClick={onBeatClick}
-              chords={chords}
               isPlaying={isPlaying}
             />
           );
