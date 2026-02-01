@@ -12,7 +12,6 @@ import { Piano, Audiotrack } from "@mui/icons-material";
 import Header from "./components/Header";
 import ChordProgression from "./pages/ChordProgression";
 import SoundDesign from "./pages/SoundDesign";
-import { audioEngine } from "./utils/audioEngine";
 import translate from "./utils/translator";
 import { exportToFile, importFromFile } from "./utils/chordStorage";
 import "./App.css";

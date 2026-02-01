@@ -133,9 +133,6 @@ function ControlPanel({
           Import
         </Button>
 
-        <Typography variant="body2" color="text.secondary">
-          Measures: {measures}
-        </Typography>
       </Stack>
     </Paper>
   );
