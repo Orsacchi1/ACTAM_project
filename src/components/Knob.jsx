@@ -11,7 +11,6 @@ function Knob({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const knobRef = useRef(null);
   const dragStartY = useRef(0);
   const dragStartValue = useRef(0);
 
@@ -146,7 +145,6 @@ function Knob({
 
         {/* Knob Body */}
         <Box
-          ref={knobRef}
           onMouseDown={handleMouseDown}
           sx={{
             position: "relative",
