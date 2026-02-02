@@ -16,7 +16,6 @@ function KnobSpecial({
   const [displayValue, setDisplayValue] = useState(
     initialDisplayValue !== null ? initialDisplayValue : value,
   );
-  const knobRef = useRef(null);
   const dragStartY = useRef(0);
   const dragStartValue = useRef(0);
 
@@ -158,7 +157,6 @@ function KnobSpecial({
         </Typography>
 
         <Box
-          ref={knobRef}
           onMouseDown={handleMouseDown}
           sx={{
             position: "relative",
