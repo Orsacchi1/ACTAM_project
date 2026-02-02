@@ -6,6 +6,7 @@ function Beat({
   currentBeat,
   onClick,
   isPlaying = false,
+  beatsPerMeasure = 4,
 }) {
   const isActive = absoluteBeat === currentBeat;
 
@@ -19,7 +20,7 @@ function Beat({
     <Box
       sx={{
         flex: 1,
-        borderRight: beatInMeasure < 3 ? "1px solid #ccc" : "none",
+        borderRight: beatInMeasure < beatsPerMeasure - 1 ? "1px solid #ccc" : "none",
         display: "flex",
         flexDirection: "column",
         position: "relative",
