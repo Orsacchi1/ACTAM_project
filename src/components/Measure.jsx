@@ -223,6 +223,7 @@ function Measure({
               currentBeat={currentBeat}
               onClick={onBeatClick}
               isPlaying={isPlaying}
+              beatsPerMeasure={beatsPerMeasure}
             />
           );
         })}
