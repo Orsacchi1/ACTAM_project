@@ -168,13 +168,3 @@ export const importPreset = (file) => {
   });
 };
 
-/**
- * Validate preset data
- * @param {Object} data - The data to validate
- * @returns {boolean} Whether the data is valid
- */
-export const validatePresetData = (data) => {
-  if (!data || typeof data !== "object") return false;
-  if (!data.harmonics || data.harmonics.length !== 128) return false;
-  return true;
-};
