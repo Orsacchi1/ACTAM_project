@@ -130,7 +130,7 @@ function ChordSelector({
           <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
             Tempo (BPM) for this Beat
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+          <Box sx={{ display: "flex", gap: 1}}>
             <TextField
               label="BPM"
               type="number"
@@ -193,7 +193,7 @@ function ChordSelector({
           </Typography>
           <Grid container spacing={1}>
             {ROOT_NOTES.map((note) => (
-              <Grid item xs={2} key={note}>
+              <Grid item key={note}>
                 <Button
                   variant={selectedRoot === note ? "contained" : "outlined"}
                   onClick={() => handleRootSelect(note)}
@@ -232,7 +232,7 @@ function ChordSelector({
           </Typography>
           <Grid container spacing={1}>
             {CHORD_QUALITIES.map((quality) => (
-              <Grid item xs={6} key={quality.id}>
+              <Grid item key={quality.id}>
                 <Button
                   variant="outlined"
                   onClick={() => handleQualitySelect(quality)}
@@ -255,9 +255,9 @@ function ChordSelector({
                     size="small"
                     sx={{
                       ml: 1,
-                      "& .MuiChip-label": {
-                        textTransform: "none",
-                      },
+                      // "& .MuiChip-label": {
+                      //   textTransform: "none",
+                      // },
                     }}
                   />
                 </Button>
