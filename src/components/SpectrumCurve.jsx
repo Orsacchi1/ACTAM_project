@@ -51,7 +51,7 @@ function SpectrumCurve({
     }
 
     // Avoid division by zero
-    if (maxValue === 0) maxValue = 1;
+    if (maxValue === 0) return;
 
     // Start drawing the curve
     ctx.beginPath();

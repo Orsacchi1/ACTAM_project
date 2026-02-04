@@ -108,14 +108,3 @@ export const importFromFile = (file) => {
   });
 };
 
-/**
- * Validate chord progression data
- * @param {Object} data - The data to validate
- * @returns {boolean} Whether the data is valid
- */
-export const validateChordData = (data) => {
-  if (!data || typeof data !== "object") return false;
-  if (!Array.isArray(data.measures)) return false;
-  if (typeof data.bpm !== "number") return false;
-  return true;
-};
