@@ -158,6 +158,7 @@ function Knob({
             cursor: isDragging ? "grabbing" : "grab",
             transition: isDragging ? "none" : "box-shadow 0.2s ease",
             transform: `rotate(${angle}deg)`,
+            /* Knob Indicator Line - Centered and Rotated */
             "&::before": {
               content: '""',
               position: "absolute",
