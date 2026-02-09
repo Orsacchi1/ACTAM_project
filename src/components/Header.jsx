@@ -17,7 +17,7 @@ function Header({ onMenuClick }) {
         </IconButton>
         <MusicNote sx={{ mr: 2 }} />
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          ACTAM Synth
+          live chord
         </Typography>
       </Toolbar>
     </AppBar>
